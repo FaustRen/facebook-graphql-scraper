@@ -1,4 +1,4 @@
-# Facebook Graphql Scraper
+# Facebook GraphQL Scraper
 
 ## Install
 
@@ -52,6 +52,11 @@ res
 ```
 
 ```python
+# -*- coding: utf-8 -*-
+import os
+from fb_graphql_scraper.facebook_graphql_scraper import FacebookGraphqlScraper as fb_graphql_scraper
+from dotenv import load_dotenv
+
 ## Without logging in account version
 fb_user_id = "KaiCenatOfficial"
 driver_path = "/Users/renren/Desktop/FB_graphql_scraper/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver"
