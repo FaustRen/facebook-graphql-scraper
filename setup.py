@@ -11,7 +11,6 @@ setup(
         "fb_graphql_scraper.base",
         "fb_graphql_scraper.tests", 
         "fb_graphql_scraper.utils",
-        "fb_graphql_scraper.resources"
         ],
     license='MIT',
     description='Implement Facebook scraper for post data retrieval',
