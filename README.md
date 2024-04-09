@@ -20,7 +20,7 @@ tqdm==4.66.1
 ### Usage
 
 You can choose between two methods to collect user posts data. 
-
+- **Pleas setup driver path at first**
 - **Log in with your account credentials**: login facebook account
 - **Without logging in**: Without logging in, click the X icon to 
 - **Difference**: The difference between these two methods is that for some personal accounts, you cannot browse the user's posts without logging into a Facebook account.
@@ -31,46 +31,42 @@ import os
 from fb_graphql_scraper.facebook_graphql_scraper import FacebookGraphqlScraper as fb_graphql_scraper
 from dotenv import load_dotenv
 
+## Without logging in account version
+facebook_user_name = "KaiCenatOfficial"
+facebook_user_id = "100087298771006"
+# Please setup your driver path
+driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver"
+url = "https://www.facebook.com/"
+res = fb_graphql_scraper.get_user_posts(
+    fb_username_or_userid=facebook_user_name, 
+    loop_times=50,
+    driver_path=driver_path,
+)
+res
 
 # ## Load account info
 # load_dotenv()
-fb_account = os.getenv("FBACCOUNT") # Facebook帳號密碼
-pwd = os.getenv("FBPASSWORD")
-
-# ## Log in account version
-fb_user_id = "KaiCenatOfficial"
-driver_path = "/Users/renren/Desktop/FB_graphql_scraper/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver"
-url = "https://www.facebook.com/"
-res = fb_graphql_scraper.get_user_posts(
-    fb_username_or_userid=fb_user_id, 
-    loop_times=50,
-    driver_path=driver_path,
-    fb_account=fb_account,
-    pwd=pwd
-)
-res
+# fb_account = os.getenv("FBACCOUNT") # Facebook帳號密碼
+# pwd = os.getenv("FBPASSWORD")
+## Log in account version.
+# facebook_user_name = "KaiCenatOfficial"
+# # facebook_user_id = "100087298771006"
+# # Please setup your driver path
+# driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver"
+# url = "https://www.facebook.com/"
+# res = fb_graphql_scraper.get_user_posts(
+#     fb_username_or_userid=facebook_user_name, 
+#     loop_times=50,
+#     driver_path=driver_path,
+#     fb_account=fb_account,
+#     pwd=pwd
+# )
+# res
 ```
 
-```python
-# -*- coding: utf-8 -*-
-import os
-from fb_graphql_scraper.facebook_graphql_scraper import FacebookGraphqlScraper as fb_graphql_scraper
-from dotenv import load_dotenv
-
-## Without logging in account version
-fb_user_id = "KaiCenatOfficial"
-driver_path = "/Users/renren/Desktop/FB_graphql_scraper/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver"
-url = "https://www.facebook.com/"
-res = fb_graphql_scraper.get_user_posts(
-    fb_username_or_userid=fb_user_id, 
-    loop_times=50,
-    driver_path=driver_path,
-)
-res
-```
 ### Optional parameters
 
-- **fb_user_id**: group id/fans page id/account id.
+- **fb_username_or_userid**: groups, fan page, account User-ID or User-Name.
 - **timeout**: How many seconds to wait before timing out. Default is 600.
 - **looptimes**: The program scrolls down Facebook pages..
 
