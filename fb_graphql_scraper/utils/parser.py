@@ -83,7 +83,7 @@ class RequestsParser(object):
             reaction_hash[each_react['node']['localized_name']
                           ] = each_react['reaction_count']  # get reaction value
 
-        for k in reaction_names:
-            if k not in reaction_hash and k not in en_reaction_names:
-                reaction_hash[k] = '0'
+        # for k in reaction_names:
+        #     if k not in reaction_hash and k not in en_reaction_names:
+        #         reaction_hash[k] = '0'
         return reaction_hash
