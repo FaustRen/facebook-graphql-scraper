@@ -105,29 +105,30 @@ def find_actors(data):
     return None
 
 
-def find_profile_id(data):
+def find_owning_profile(data):
     if isinstance(data, dict):
-        # If it's a dictionary, check if it contains the 'profile_id' key
-        if 'profile_id' in data:
-            # If the value of the 'profile_id' key is a dictionary
-            if isinstance(data['profile_id'], dict):
-                # Return the value of the 'profile_id' key
-                return data['profile_id']
+        # If it's a dictionary, check if it contains the 'story' key
+        if 'owning_profile' in data:
+            # If the value of the 'story' key is a dictionary and contains the 'actors' key
+            if isinstance(data['owning_profile'], dict):
+                # Return the value of the 'id' key under 'actors'
+                return data['owning_profile']
 
         # If no matching condition is found, recursively check each value in the dictionary
         for value in data.values():
-            result = find_profile_id(value)
+            result = find_owning_profile(value)
             if result:
                 return result
 
     elif isinstance(data, list):
         # If it's a list, recursively check each element in the list
         for item in data:
-            result = find_profile_id(item)
+            result = find_owning_profile(item)
             if result:
                 return result
     # If no matching condition is found, return None
     return None
+
 
 def timeout(timelimit):
     def decorator(func):
@@ -147,9 +148,24 @@ def timeout(timelimit):
         return decorated
     return decorator
 
+
 def get_current_time(timezone="Asia/Taipei"):
     current_time_utc = datetime.utcnow()
     target_timezone = pytz.timezone(timezone)
     target_current_time = current_time_utc.replace(
         tzinfo=pytz.utc).astimezone(target_timezone)
     return target_current_time
+
+
+def days_difference_from_now(tmp_creation_array: list) -> int:
+    timestamp = min(tmp_creation_array)
+    current_date_time = datetime.now()
+    date_time_obj = datetime.fromtimestamp(timestamp)
+    difference = current_date_time - date_time_obj
+    return difference.days
+
+
+def is_date_exceed_limit(max_days_ago, days_limit: int = 61):
+    if max_days_ago > days_limit:
+        return True
+    return False

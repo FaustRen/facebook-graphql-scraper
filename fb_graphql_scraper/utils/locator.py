@@ -37,21 +37,18 @@ class PageLocators(object):
     DISPLAY_MORE = (
         By.XPATH, f"//div[@class='{PageClass.DISPLAY_MORE}' and @role='{PageRoleValue.DISPLAY_MORE}' and text()='{PageText.DISPLAY_MORE}']")
 
-    # LOGGINUSR1 = (
-    #     "/html/body/div[1]/div[1]/div[1]/div/div[3]/div[2]/form/div[2]/div[1]/input")  # user1
-    # LOGGINPWD1 = (
-    #     "/html/body/div[1]/div[1]/div[1]/div/div[3]/div[2]/form/div[2]/div[2]/div/div/input")  # pwd1
-    
     LOGGINUSR1 = (
         "/html/body/div[1]/div[1]/div[1]/div/div/div/div[2]/div/div[1]/form/div[1]/div[1]/input"
     )
-    
     LOGGINPWD1 = (
         "/html/body/div[1]/div[1]/div[1]/div/div/div/div[2]/div/div[1]/form/div[1]/div[2]/div/input"
     )
     
-
     LOGGINUSR2 = (
         "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[1]/div/div[2]/div/div/div/div[2]/form/div/div[3]/div/label/div/div/input")
     LOGGINPWD2 = (
         "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[1]/div/div[2]/div/div/div/div[2]/form/div/div[4]/div/label/div/div/input")
+
+    # version.3: facebook login page
+    LOGGINUSR3 = (By.NAME, "email")
+    LOGGINPWD3 = (By.NAME, "pass")

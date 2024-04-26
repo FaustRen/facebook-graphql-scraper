@@ -8,12 +8,6 @@ from fb_graphql_scraper.utils.utils import *
 class RequestsParser(object):
     def __init__(self, driver) -> None:
         self.driver = driver
-        self.res_new = []
-        self.feedback_list = []
-        self.context_list = []
-        self.creation_list = []
-        self.author_id_list = []
-        self.author_id_list2 = []
         self.reaction_names = ["讚", "哈", "怒", "大心", "加油", "哇", "嗚"]
         self.en_reaction_names = ["like", "haha", "angry", "love", "care", "sorry", "wow"]
 
@@ -26,6 +20,15 @@ class RequestsParser(object):
             body_content = body.decode("utf-8").split("\n")
             return body_content
         return None
+    
+    def clean_res(self):
+        self.res_new = []
+        self.feedback_list = []
+        self.context_list = []
+        self.creation_list = []
+        self.author_id_list = []
+        self.author_id_list2 = []
+        self.owning_profile = []
 
     def parse_body(self, body_content):
         for each_body in body_content:
@@ -39,12 +42,14 @@ class RequestsParser(object):
                     self.feedback_list.append(each_feedback)
                     message_text = find_message_text(json_data)
                     creation_time = find_creation(json_data)
+                    owing_profile = find_owning_profile(json_data)
                     if message_text:
                         self.context_list.append(message_text)
                     elif not message_text:
                         self.context_list.append(None)
                     if creation_time:
                         self.creation_list.append(creation_time)
+                    self.owning_profile.append(owing_profile)
 
             # Did not display or record error message at here
             except Exception as e:
@@ -75,15 +80,24 @@ class RequestsParser(object):
         ]]
         return df_res
 
-    def process_reactions(self, reactions_in):
-        reaction_names = self.reaction_names
-        en_reaction_names = self.en_reaction_names # if you are in U.S, use self.en_reaction_names
+    def process_reactions(self, reactions_in) -> dict:
+        """Extract sub reaction value: 
+        Args:
+            reactions_in (_type_): _description_
+        Returns:
+            _dict_: {
+                "like": value, 
+                "haha": value, 
+                "angry": value, 
+                "love": value, 
+                "care": value, 
+                "sorry": value, 
+                "wow": value
+        }
+        Note: 
+        """
         reaction_hash = {}
         for each_react in reactions_in:
             reaction_hash[each_react['node']['localized_name']
                           ] = each_react['reaction_count']  # get reaction value
-
-        # for k in reaction_names:
-        #     if k not in reaction_hash and k not in en_reaction_names:
-        #         reaction_hash[k] = '0'
         return reaction_hash

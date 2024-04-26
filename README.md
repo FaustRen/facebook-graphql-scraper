@@ -27,41 +27,34 @@ You can choose between two methods to collect user posts data.
 
 ```python
 # -*- coding: utf-8 -*-
-import os
 from fb_graphql_scraper.facebook_graphql_scraper import FacebookGraphqlScraper as fb_graphql_scraper
-from dotenv import load_dotenv
 
-## Without logging in account version
-facebook_user_name = "KaiCenatOfficial"
-facebook_user_id = "100087298771006"
-# Please setup your driver path
-driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver"
-url = "https://www.facebook.com/"
-res = fb_graphql_scraper.get_user_posts(
-    fb_username_or_userid=facebook_user_name, 
-    loop_times=50,
-    driver_path=driver_path,
-)
-res
 
-# ## Load account info
-# load_dotenv()
-# fb_account = os.getenv("FBACCOUNT") # Facebook帳號密碼
-# pwd = os.getenv("FBPASSWORD")
-## Log in account version.
-# facebook_user_name = "KaiCenatOfficial"
-# # facebook_user_id = "100087298771006"
-# # Please setup your driver path
-# driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver"
-# url = "https://www.facebook.com/"
-# res = fb_graphql_scraper.get_user_posts(
-#     fb_username_or_userid=facebook_user_name, 
-#     loop_times=50,
-#     driver_path=driver_path,
-#     fb_account=fb_account,
-#     pwd=pwd
-# )
-# res
+## Example.1 - without logging in
+if __name__ == "__main__":
+    facebook_user_name = "love.yuweishao"
+    facebook_user_id = "100044253168423"
+    days_limit = 30 # Number of days within which to scrape posts
+    driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver" 
+    fb_spider = fb_graphql_scraper(driver_path=driver_path)
+    res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_name, days_limit=days_limit,display_progress=True)
+    print(res)
+
+
+## Example.2 - login in your facebook account to collect data
+# if __name__ == "__main__":
+    # facebook_user_name = "love.yuweishao"
+    # facebook_user_id = "100044253168423"
+    # fb_account = "facebook_account"
+    # fb_pwd = "facebook_paswword"
+    # days_limit = 30 # Number of days within which to scrape posts
+    # driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver" 
+    # fb_spider = fb_graphql_scraper(fb_account=fb_account,fb_pwd=fb_pwd,driver_path=driver_path)
+    # res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_name, days_limit=days_limit,display_progress=True)
+    # print(res)
+    
+
+
 ```
 
 ### Optional parameters
@@ -71,82 +64,98 @@ res
 - **looptimes**: The program scrolls down Facebook pages..
 
 
-## Post example
+## Result example
 
 ```python
-[{'post_id': '385393337713956',
-  'post_url': 'https://www.facebook.com/385393337713956',
-  'username_or_userid': 'KaiCenatOfficial',
-  'published_date': Timestamp('2024-03-31 16:00:39'),
-  'published_date2': '2024-03-31',
-  'time': 1711900839,
-  'reaction_count.count': 1224,
-  'comment_rendering_instance.comments.total_count': 37,
-  'share_count.count': 32,
-  'sub_reactions': {'讚': 802,
-   '哈': 406,
-   '大心': 9,
-   '怒': 3,
-   '加油': 2,
-   '哇': 2,
-   '嗚': '0'},
-  'context': 'Druski Plays "What\'s In The Box?" 😱',
-  'video_view_count': 15870},
- {'post_id': '387206327532657',
-  'post_url': 'https://www.facebook.com/387206327532657',
-  'username_or_userid': 'KaiCenatOfficial',
-  'published_date': Timestamp('2024-03-30 12:01:06'),
-  'published_date2': '2024-03-30',
-  'time': 1711800066,
-  'reaction_count.count': 7153,
-  'comment_rendering_instance.comments.total_count': 154,
-  'share_count.count': 67,
-  'sub_reactions': {'讚': 5674,
-   '哈': 1307,
-   '大心': 121,
-   '嗚': 22,
-   '加油': 21,
-   '哇': 8,
-   '怒': '0'},
-  'context': 'Kai Cenat Asks Tyla Out On A Date 😍 #viralreelsfb #comedy #kaicenat #reelsfb',
-  'video_view_count': 73898},
- {'post_id': '385387707714519',
-  'post_url': 'https://www.facebook.com/385387707714519',
-  'username_or_userid': 'KaiCenatOfficial',
-  'published_date': Timestamp('2024-03-29 17:01:39'),
-  'published_date2': '2024-03-29',
-  'time': 1711731699,
-  'reaction_count.count': 1000,
-  'comment_rendering_instance.comments.total_count': 47,
-  'share_count.count': 15,
-  'sub_reactions': {'讚': 762,
-   '哈': 194,
-   '大心': 34,
-   '哇': 7,
-   '加油': 2,
-   '嗚': 1,
-   '怒': '0'},
-  'context': 'Chunkz Gets Hypnotised 😱',
-  'video_view_count': 13763},
- {'post_id': '384078261178797',
-  'post_url': 'https://www.facebook.com/384078261178797',
-  'username_or_userid': 'KaiCenatOfficial',
-  'published_date': Timestamp('2024-03-28 17:00:21'),
-  'published_date2': '2024-03-28',
-  'time': 1711645221,
-  'reaction_count.count': 2587,
-  'comment_rendering_instance.comments.total_count': 77,
-  'share_count.count': 45,
-  'sub_reactions': {'讚': 1905,
-   '哈': 477,
-   '大心': 186,
-   '加油': 15,
-   '哇': 4,
-   '怒': '0',
-   '嗚': '0'},
-  'context': 'Trying The New Ice Spice Drink 😳',
-  'video_view_count': 125605}
-]
+{'fb_username_or_userid': 'love.yuweishao',
+ 'profile': ['任何工作事宜請洽 高先生',
+  '聯絡信箱：hawa00328@gmail.com',
+  '聯絡電話：0975-386-266',
+  '粉絲專頁',
+  ' · 演員',
+  'hawa00328@gmail.com',
+  '1,497,248 位追蹤者'],
+ 'data': [{'post_id': '993720562113040',
+   'post_url': 'https://www.facebook.com/993720562113040',
+   'username_or_userid': 'love.yuweishao',
+   'owing_profile': {'__typename': 'User',
+    'name': '邵雨薇',
+    'short_name': '邵雨薇',
+    'id': '100044253168423'},
+   'published_date': Timestamp('2024-04-24 17:42:14'),
+   'published_date2': '2024-04-24',
+   'time': 1713980534,
+   'reaction_count.count': 3884,
+   'comment_rendering_instance.comments.total_count': 34,
+   'share_count.count': 10,
+   'sub_reactions': {'讚': 3652, '大心': 226, '加油': 5, '哈': 1},
+   'context': 'breathe and life',
+   'video_view_count': nan},
+  {'post_id': '993371658814597',
+   'post_url': 'https://www.facebook.com/993371658814597',
+   'username_or_userid': 'love.yuweishao',
+   'owing_profile': {'__typename': 'User',
+    'name': '邵雨薇',
+    'short_name': '邵雨薇',
+    'id': '100044253168423'},
+   'published_date': Timestamp('2024-04-24 03:55:34'),
+   'published_date2': '2024-04-24',
+   'time': 1713930934,
+   'reaction_count.count': 5043,
+   'comment_rendering_instance.comments.total_count': 41,
+   'share_count.count': 29,
+   'sub_reactions': {'讚': 4632, '大心': 397, '加油': 8, '哇': 4, '哈': 2},
+   'context': '夏季的雨天總讓人難以預期\n每日帶不帶傘的莫非定律 \n空間裡的黏膩和潮濕點滴\n通通都被D-26匯集在一起\n陰晴不定的天氣就交給最懂你的HYD❤️\n\nhttps://reurl.cc/Gjd9nv\nHYD 品宅趣\n#HYD #雙效清淨 #輕量設計 #除濕機',
+   'video_view_count': nan},
+  {'post_id': '992770662208030',
+   'post_url': 'https://www.facebook.com/992770662208030',
+   'username_or_userid': 'love.yuweishao',
+   'owing_profile': {'__typename': 'User',
+    'name': '邵雨薇',
+    'short_name': '邵雨薇',
+    'id': '100044253168423'},
+   'published_date': Timestamp('2024-04-23 04:33:52'),
+   'published_date2': '2024-04-23',
+   'time': 1713846832,
+   'reaction_count.count': 3286,
+   'comment_rendering_instance.comments.total_count': 32,
+   'share_count.count': 5,
+   'sub_reactions': {'讚': 3150, '大心': 61, '加油': 59, '嗚': 13, '哇': 2, '哈': 1},
+   'context': None,
+   'video_view_count': nan},
+  {'post_id': '992336592251437',
+   'post_url': 'https://www.facebook.com/992336592251437',
+   'username_or_userid': 'love.yuweishao',
+   'owing_profile': {'__typename': 'User',
+    'name': '邵雨薇',
+    'short_name': '邵雨薇',
+    'id': '100044253168423'},
+   'published_date': Timestamp('2024-04-22 09:57:32'),
+   'published_date2': '2024-04-22',
+   'time': 1713779852,
+   'reaction_count.count': 11892,
+   'comment_rendering_instance.comments.total_count': 102,
+   'share_count.count': 31,
+   'sub_reactions': {'讚': 11164, '大心': 701, '加油': 15, '哈': 6, '哇': 5, '嗚': 1},
+   'context': '母が撮った写真はとてもきれいです.🌸',
+   'video_view_count': nan},
+  {'post_id': '991854065633023',
+   'post_url': 'https://www.facebook.com/991854065633023',
+   'username_or_userid': 'love.yuweishao',
+   'owing_profile': {'__typename': 'User',
+    'name': '邵雨薇',
+    'short_name': '邵雨薇',
+    'id': '100044253168423'},
+   'published_date': Timestamp('2024-04-21 12:34:39'),
+   'published_date2': '2024-04-21',
+   'time': 1713702879,
+   'reaction_count.count': 5250,
+   'comment_rendering_instance.comments.total_count': 43,
+   'share_count.count': 13,
+   'sub_reactions': {'讚': 4873, '大心': 364, '加油': 6, '哈': 4, '哇': 3},
+   'context': '愛生活也愛工作🖤\n\n@michaelkors \n#MichaelKors',
+   'video_view_count': nan}]
+}
 ```
 
 ### Notes
