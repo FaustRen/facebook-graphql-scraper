@@ -9,49 +9,46 @@ import time
 
 
 class PageOptional(object):
-    def __init__(self, url_in: str, driver=None, fb_account: str = None, pwd: str = None):
+    def __init__(self, driver=None, fb_account: str = None, fb_pwd: str = None):
         self.locator = PageLocators
         self.xpath_elements = PageXpath
         self.class_elements = PageClass
         self.page_text = PageText
         self.driver = driver
-        self.url = url_in
-        self.driver.get(url=self.url)
         self.fb_account = fb_account
-        self.pwd = pwd
-        time.sleep(3)
+        self.fb_pwd = fb_pwd
 
         # Loggin account
-        if self.fb_account and self.pwd:
+        if self.fb_account and self.fb_pwd:
+            login_page_url = "https://www.facebook.com/login"
+            self.driver.get(url=login_page_url)
             self.login_page()
-
-        # 免登入帳號, 適用不需登入帳號的爬蟲目標 / Without logging, click X button
-        else:
-            self.click_reject_login_button()
 
     def login_page(self):
         try:
-            self.login_account(user=self.fb_account, password=self.pwd,
-                               user_element=self.locator.LOGGINUSR1, pwd_element=self.locator.LOGGINPWD1)
-        except:
-            self.login_account(user=self.fb_account, password=self.pwd,
-                               user_element=self.locator.LOGGINUSR2, pwd_element=self.locator.LOGGINPWD2)
+            self.login_account(user=self.fb_account, 
+                               password=self.fb_pwd,
+            )
+            time.sleep(5)
+        except Exception as e:
+            print(f"Login faield, message: {e}")
 
     def clean_requests(self):
+        print(f"Before cleaning driver requests, the number of requests are: {len(self.driver.requests)}")
         try:
             print("Try to clear driver requests..")
             del self.driver.requests
-            print("Clear")
+            print(f"Clear, the number of requests are: {len(self.driver.requests)}")
         except Exception as e:
             print(f"Clear unsuccessfully, message: {e}")
 
     def get_in_url(self):
         self.driver.get(url=self.url)
 
-    def login_account(self, user: str, password: str, user_element, pwd_element):
-        user_element = self.driver.find_element(By.XPATH, user_element)
+    def login_account(self, user: str, password: str):
+        user_element = self.driver.find_element(By.NAME, "email")
         user_element.send_keys(user)
-        password_element = self.driver.find_element(By.XPATH, pwd_element)
+        password_element = self.driver.find_element(By.NAME, "pass")
         password_element.send_keys(password)
         password_element.send_keys(Keys.ENTER)
 
