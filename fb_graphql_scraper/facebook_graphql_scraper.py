@@ -159,6 +159,7 @@ class FacebookGraphqlScraper(FacebookSettings):
     def get_user_posts(self, fb_username_or_userid: str, days_limit: int = 61, display_progress:bool=True) -> dict:
         url = "https://www.facebook.com/"+fb_username_or_userid # 建立完整user連結
         self.move_to_next_kol(url=url)# driver 跳至該連結
+        self.move_to_next_kol(url=url)# 徹底清除requests避免參雜上一用戶資料
         self.requests_parser.clean_res() # 清空所有用於儲存結果的array
         self.set_container() # 清空用於儲存貼文資訊的array
         self.set_stop_point() # 設置/重置停止條件 | 停止條件: 瀏覽器無法往下取得更多貼文(n次) or 已取得目標天數內貼文
