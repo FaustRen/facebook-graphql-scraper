@@ -2,6 +2,7 @@
 import concurrent.futures as futures
 from datetime import datetime
 import pytz
+import time
 
 
 # if key: 'subscription_target_id' in feedback, store this feedback
@@ -158,6 +159,14 @@ def get_current_time(timezone="Asia/Taipei"):
 
 
 def days_difference_from_now(tmp_creation_array: list) -> int:
+    """計算第一次發文日期與當前日間隔天數
+
+    Args:
+        tmp_creation_array (list): _description_
+
+    Returns:
+        int: 間隔天數
+    """
     timestamp = min(tmp_creation_array)
     current_date_time = datetime.now()
     date_time_obj = datetime.fromtimestamp(timestamp)
@@ -169,3 +178,6 @@ def is_date_exceed_limit(max_days_ago, days_limit: int = 61):
     if max_days_ago > days_limit:
         return True
     return False
+
+def pause(pause_time: int = 1):
+    time.sleep(pause_time)
