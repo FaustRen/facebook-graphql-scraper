@@ -67,6 +67,20 @@ class PageOptional(object):
     def move_to_element(self, element_in):
         ActionChains(self.driver).move_to_element(element_in).perform()
 
+    def load_next_page(self, url:str, clear_limit:int=20):
+        """>> Move on to target facebook user page,
+        before moving, clean driver's requests first,
+        or driver would store previous account's data.
+        Args: url (str): user(kol) links"""
+        i = 0
+        while i <= clear_limit:
+            self.clean_requests()
+            if len(self.driver.requests) == 0:
+                print("Clear all driver requests already!")
+                break
+            i += 1
+        self.driver.get(url=url)
+
     def click_display_button(self):
         elements = self.driver.find_elements(self.locator.DISPLAY_MORE)
         for _ in range(10):

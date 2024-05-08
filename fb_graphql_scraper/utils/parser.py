@@ -21,7 +21,7 @@ class RequestsParser(object):
             return body_content
         return None
     
-    def clean_res(self):
+    def _clean_res(self):
         self.res_new = []
         self.feedback_list = []
         self.context_list = []

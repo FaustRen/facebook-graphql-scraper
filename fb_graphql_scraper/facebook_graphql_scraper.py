@@ -4,24 +4,48 @@ import time
 import json
 from bs4 import BeautifulSoup
 import requests
-from fb_graphql_scraper.base.base_page import *
-from fb_graphql_scraper.pages.page_optional import *
+from fb_graphql_scraper.base.base_page import BasePage
+from fb_graphql_scraper.pages.page_optional import PageOptional
+from fb_graphql_scraper.utils.parser import RequestsParser
 from fb_graphql_scraper.utils.locator import *
 from fb_graphql_scraper.utils.utils import *
-from fb_graphql_scraper.utils.parser import RequestsParser
-
 
 class FacebookSettings:
+    """ How to use:
+    from fb_graphql_scraper.facebook_graphql_scraper import FacebookGraphqlScraper as fb_graphql_scraper
+    
+    # >> Example.1 - without logging in
+    if __name__ == "__main__":
+        facebook_user_name = "love.yuweishao"
+        facebook_user_id = "100044253168423"
+        days_limit = 30 # Number of days within which to scrape posts
+        driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver" 
+        fb_spider = fb_graphql_scraper(driver_path=driver_path)
+        res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_name, days_limit=days_limit,display_progress=True)
+        print(res)
+
+    # >> Example.2 - login in your facebook account to collect data
+    # if __name__ == "__main__":
+        # facebook_user_name = "love.yuweishao"
+        # facebook_user_id = "100044253168423"
+        # fb_account = "facebook_account"
+        # fb_pwd = "facebook_paswword"
+        # days_limit = 30 # Number of days within which to scrape posts
+        # driver_path = "/Users/renren/Desktop/FB_graphql_scraper拷貝/fb_graphql_scraper/resources/chromedriver-mac-arm64/chromedriver" 
+        # fb_spider = fb_graphql_scraper(fb_account=fb_account,fb_pwd=fb_pwd,driver_path=driver_path)
+        # res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_name, days_limit=days_limit,display_progress=True)
+        # print(res)
+    """
     def __init__(self, fb_account: str = None, fb_pwd: str = None, driver_path: str = None):
         super().__init__()
         self.fb_account = fb_account
         self.fb_pwd = fb_pwd
         self.driver_path = driver_path
-        self.set_spider(driver_path=driver_path)
-        self.set_container()
-        self.set_stop_point()
+        self._set_spider(driver_path=driver_path)
+        self._set_container()
+        self._set_stop_point()
 
-    def set_spider(self, driver_path):
+    def _set_spider(self, driver_path):
         """Description: Auto login account or click "X" button to continue,
         but some accounts cannot display info if you don't login account
         Args: url (str): target user which you want to collect data."""
@@ -34,7 +58,7 @@ class FacebookSettings:
         time.sleep(3)
         self.requests_parser = RequestsParser(driver=self.page_optional.driver)
 
-    def set_container(self):
+    def _set_container(self):
         self.post_id_list = []
         self.reaction_count_list = []
         self.profile_feed = []
@@ -46,7 +70,7 @@ class FacebookSettings:
             "comment_share_value": []
         }
 
-    def set_stop_point(self):
+    def _set_stop_point(self):
         self.pre_diff_days = float("-inf")
         self.counts_of_same_diff_days = 0
 
@@ -55,26 +79,8 @@ class FacebookGraphqlScraper(FacebookSettings):
     def __init__(self, fb_account: str = None, fb_pwd: str = None, driver_path: str = None):
         super().__init__(fb_account=fb_account, fb_pwd=fb_pwd, driver_path=driver_path)
 
-    def move_to_next_kol(self, url: str):
-        """>> Move on to target facebook user page,
-        before moving, clean driver's requests first,
-        or driver would store previous account's data.
-        Args: url (str): user(kol) links"""
-        clear_limit = 5
-        i = 0
-        while i <= clear_limit:
-            self.page_optional.clean_requests()
-            if len(self.page_optional.driver.requests) == 0:
-                print("Clear all driver requests already!")
-                break
-            i += 1
-        self.page_optional.driver.get(url=url)
-
-    def pause(self, pause_time: int = 1):
-        time.sleep(pause_time)
-
     def check_progress(self, days_limit: int = 61, display_progress:bool=True):
-        """Check collected data date"""
+        """Check the published date of collected posts"""
         driver_requests = self.page_optional.driver.requests
         tmp_creation_array = []
         # 取得當前頁面最底部貼文
@@ -158,11 +164,11 @@ class FacebookGraphqlScraper(FacebookSettings):
 
     def get_user_posts(self, fb_username_or_userid: str, days_limit: int = 61, display_progress:bool=True) -> dict:
         url = "https://www.facebook.com/"+fb_username_or_userid # 建立完整user連結
-        self.move_to_next_kol(url=url)# driver 跳至該連結
-        self.move_to_next_kol(url=url)# 徹底清除requests避免參雜上一用戶資料
-        self.requests_parser.clean_res() # 清空所有用於儲存結果的array
-        self.set_container() # 清空用於儲存貼文資訊的array
-        self.set_stop_point() # 設置/重置停止條件 | 停止條件: 瀏覽器無法往下取得更多貼文(n次) or 已取得目標天數內貼文
+        self.page_optional.load_next_page(url=url, clear_limit=20)# driver 跳至該連結
+        self.page_optional.load_next_page(url=url, clear_limit=20)# 徹底清除requests避免參雜上一用戶資料
+        self.requests_parser._clean_res() # 清空所有用於儲存結果的array
+        self._set_container() # 清空用於儲存貼文資訊的array
+        self._set_stop_point() # 設置/重置停止條件 | 停止條件: 瀏覽器無法往下取得更多貼文(n次) or 已取得目標天數內貼文
 
         # If you did not login, click X button
         if self.fb_account == None: self.page_optional.click_reject_login_button()
@@ -192,7 +198,7 @@ class FacebookGraphqlScraper(FacebookSettings):
                     counts_of_round = 0
 
             counts_of_round += 1
-            self.pause(0.3)
+            pause(0.3)
 
         # Collect data, 利用driver請求列表當中的GraphQL來取得資料
         driver_requests = self.page_optional.driver.requests
