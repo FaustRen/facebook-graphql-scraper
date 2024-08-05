@@ -179,16 +179,21 @@ class FacebookGraphqlScraper(FacebookSettings):
 
         # Get profile information
         try:
-            if self.fb_account != None:
+            if self.fb_account == None:
                 profile_feed = self.get_profile_feed(dict_in={"class": "x1yztbdb"})
             else:
                 profile_feed = self.get_profile_feed()
-            if "Page" in profile_feed or "page" in profile_feed:
-                followers = self.get_plugin_page_followers(fb_username_or_userid=fb_username_or_userid)
-                profile_feed.append(followers)
+
         except Exception as e:
-            print("Collect profile info failed, return empty array")
-            profile_feed = []
+            try:
+                if self.fb_account != None:
+                    profile_feed = self.get_profile_feed(dict_in={"class": "x1yztbdb"})
+                else:
+                    profile_feed = self.get_profile_feed()
+                    
+            except Exception as e:
+                print("Collect profile info failed, profile info will be empty array.")
+                profile_feed = []
 
         # Scroll page
         counts_of_round = 0
