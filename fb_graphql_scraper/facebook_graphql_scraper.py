@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+#%%
 import pandas as pd
 import time
 import json
@@ -128,7 +129,10 @@ class FacebookGraphqlScraper(FacebookSettings):
         plugin_page_url = f"https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2F{fb_username_or_userid}&tabs=timeline&width=340&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId&locale=en_us"
         plugin_response = requests.get(url=plugin_page_url)
         plugin_soup = BeautifulSoup(plugin_response.text, "html.parser")
-        return plugin_soup.find("div", class_="_1drq").text
+        plugin_soup = plugin_soup.find("div", class_="_1drq")
+        if not plugin_soup:
+            return plugin_soup
+        return plugin_soup.text
     
     def format_data(self, res_in, fb_username_or_userid, new_reactions):
         final_res = pd.json_normalize(res_in)
@@ -194,6 +198,10 @@ class FacebookGraphqlScraper(FacebookSettings):
             except Exception as e:
                 print("Collect profile info failed, profile info will be empty array.")
                 profile_feed = []
+
+        if "Page" in profile_feed:
+            followers = self.get_plugin_page_followers(fb_username_or_userid=fb_username_or_userid)
+            if followers: profile_feed.append(followers)
 
         # Scroll page
         counts_of_round = 0
