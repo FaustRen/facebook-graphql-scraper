@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='facebook-graphql-scraper',
-    version='1.1.0',
+    version='1.1.1',
     packages=[
         "fb_graphql_scraper",
         "fb_graphql_scraper.pages",

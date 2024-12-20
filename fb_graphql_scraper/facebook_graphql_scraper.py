@@ -194,11 +194,17 @@ class FacebookGraphqlScraper(FacebookSettings):
             self.page_optional.click_reject_login_button()
             time.sleep(2)
             self.page_optional.scroll_window_with_parameter("4000")
-            init_payload = self.get_init_payload()
-            payload_variables = init_payload.get("variables")
-            user_id = str(payload_variables["id"])
-            doc_id = str(init_payload.get("doc_id"))
-            print("Collect posts wihout loggin in, script do not display progress")
+            for _ in range(5):
+                try:
+                    init_payload = self.get_init_payload()
+                    payload_variables = init_payload.get("variables")
+                    user_id = str(payload_variables["id"])
+                    doc_id = str(init_payload.get("doc_id"))
+                    print("Collect posts wihout loggin in, script do not display progress")
+                    break
+                except Exception as e:
+                    print("Wait 1 second to load page")
+                    time.sleep(1)
 
         # Get profile information
         try:
