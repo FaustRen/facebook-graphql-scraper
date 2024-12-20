@@ -5,6 +5,7 @@ import time
 import json
 from bs4 import BeautifulSoup
 import requests
+from urllib.parse import parse_qs, unquote
 from fb_graphql_scraper.base.base_page import BasePage
 from fb_graphql_scraper.pages.page_optional import PageOptional
 from fb_graphql_scraper.utils.parser import RequestsParser
@@ -169,6 +170,16 @@ class FacebookGraphqlScraper(FacebookSettings):
                 reactions_in=each_reactions)
             reactions_out.append(processed_reactions)
         return reactions_out
+    
+    def get_init_payload(self):
+        requests_list = self.page_optional.driver.requests
+        for req in requests_list:
+            if req.url == "https://www.facebook.com/api/graphql/":
+                payload = req.body.decode('utf-8')  # 解碼成字串
+                break
+        first_payload = self.requests_parser.extract_first_payload(payload=payload)
+        return first_payload
+
 
     def get_user_posts(self, fb_username_or_userid: str, days_limit: int = 61, display_progress:bool=True) -> dict:
         url = f"https://www.facebook.com/{fb_username_or_userid}?locale=en_us" # 建立完整user連結
@@ -179,7 +190,15 @@ class FacebookGraphqlScraper(FacebookSettings):
         self._set_stop_point() # 設置/重置停止條件 | 停止條件: 瀏覽器無法往下取得更多貼文(n次) or 已取得目標天數內貼文
 
         # If you did not login, click X button
-        if self.fb_account == None: self.page_optional.click_reject_login_button()
+        if self.fb_account == None:
+            self.page_optional.click_reject_login_button()
+            time.sleep(2)
+            self.page_optional.scroll_window_with_parameter("4000")
+            init_payload = self.get_init_payload()
+            payload_variables = init_payload.get("variables")
+            user_id = str(payload_variables["id"])
+            doc_id = str(init_payload.get("doc_id"))
+            print("Collect posts wihout loggin in, script do not display progress")
 
         # Get profile information
         try:
@@ -202,6 +221,11 @@ class FacebookGraphqlScraper(FacebookSettings):
         if "Page" in profile_feed:
             followers = self.get_plugin_page_followers(fb_username_or_userid=fb_username_or_userid)
             if followers: profile_feed.append(followers)
+          
+        # collect data without login  
+        if self.fb_account == None:
+            res = self.requests_flow(doc_id = doc_id, fb_username_or_userid=user_id, days_limit=days_limit, profile_feed=profile_feed)
+            return res
 
         # Scroll page
         counts_of_round = 0
@@ -235,6 +259,78 @@ class FacebookGraphqlScraper(FacebookSettings):
         new_reactions = self.process_reactions(res_in=res_out)
 
         # 建立result
+        final_res = self.format_data(
+            res_in=res_out, 
+            fb_username_or_userid=fb_username_or_userid, 
+            new_reactions=new_reactions
+        )
+        return {
+            "fb_username_or_userid": fb_username_or_userid,
+            "profile": profile_feed,
+            "data": final_res,
+        }
+        
+    def requests_flow(self, doc_id:str, fb_username_or_userid:str, days_limit:int, profile_feed:list):
+        """
+        Fetch more posts from a user's Facebook profile using the requests module.
+
+        Flow:
+            1. Get the document ID of the target Facebook profile.
+            2. Use the requests module to fetch data from the profile.
+            3. Continuously fetch data by checking for new posts until the specified days limit is reached.
+
+        Args:
+            doc_id (str): The document ID of the target Facebook account.
+            fb_username_or_userid (str): The Facebook username or user ID of the target account.
+            days_limit (int): The number of days for which to fetch posts (limits the time range of retrieved posts).
+            profile_feed (list): A list containing the posts retrieved from the target profile.
+
+        Helper Functions:
+            1. get_before_time:
+                Retrieves Facebook posts from a specified time period before the current date.
+
+            2. get_payload:
+                Prepares the payload for the next round of requests to the server.
+
+            3. get_next_page_status:
+                Checks whether the target Facebook user has more posts available for retrieval.
+
+            4. compare_timestamp:
+                Verifies whether a retrieved post falls within the specified time period for collection.
+        """
+
+        url = "https://www.facebook.com/api/graphql/"
+        before_time = get_before_time()
+        loop_limit = 50
+
+        # Extract data
+        for i in range(loop_limit):
+            payload_in = get_payload(
+                doc_id_in=doc_id, 
+                id_in=fb_username_or_userid, 
+                before_time=before_time
+            )
+            response = requests.post(url=url, data=payload_in)
+            body = response.content
+            decoded_body = body.decode("utf-8")
+            body_content = decoded_body.split("\n")
+            self.requests_parser.parse_body(body_content=body_content)
+
+            # Check progress
+            next_page_status = get_next_page_status(body_content=body_content)
+            before_time = str(self.requests_parser.creation_list[-1])
+            if not next_page_status:
+                print("There are no more posts.")
+                break
+
+            # date_object = int(datetime.strptime(before_time, "%Y-%m-%d"))
+            if compare_timestamp(timestamp=int(before_time), days=days_limit):
+                print(f"The scraper has successfully retrieved posts from the past {str(days_limit)} days.")
+                break
+
+        res_out = self.requests_parser.collect_posts()
+        new_reactions = self.process_reactions(res_in=res_out)
+        # create result
         final_res = self.format_data(
             res_in=res_out, 
             fb_username_or_userid=fb_username_or_userid, 

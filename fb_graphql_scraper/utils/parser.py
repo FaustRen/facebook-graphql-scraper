@@ -2,6 +2,7 @@
 import pandas as pd
 from seleniumwire.utils import decode
 import json
+from urllib.parse import parse_qs, unquote
 from fb_graphql_scraper.utils.utils import *
 
 
@@ -101,3 +102,11 @@ class RequestsParser(object):
             reaction_hash[each_react['node']['localized_name']
                           ] = each_react['reaction_count']  # get reaction value
         return reaction_hash
+
+    def extract_first_payload(self, payload:str):
+        parsed_data = parse_qs(payload)
+        decoded_data = {unquote(k): [unquote(v) for v in vals] for k, vals in parsed_data.items()} # 解碼 keys 和 values
+        first_payload = {k: v[0] for k, v in decoded_data.items()} # 如果只需要第一個值作為字典中的單一值
+        payload_variables = json.loads(first_payload['variables'])
+        first_payload['variables'] = payload_variables
+        return first_payload
