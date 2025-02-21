@@ -17,6 +17,18 @@ selenium_wire==5.1.0
 tqdm==4.66.1
 ```
 
+# Support Me
+
+If you enjoy this project and would like to support me, please consider donating 🙌  
+Your support will help me continue developing this project and working on other exciting ideas!
+
+## 💖 Ways to Support:
+
+- **PayPal**: [https://www.paypal.me/faustren1z](https://www.paypal.me/faustren1z)
+- **Buy Me a Coffee**: [https://buymeacoffee.com/faustren1z](https://buymeacoffee.com/faustren1z)
+
+Thank you for your support!! 🎉
+
 ### Usage
 
 You can choose between two methods to collect user posts data. 

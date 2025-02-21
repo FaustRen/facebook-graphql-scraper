@@ -14,7 +14,3 @@ class BasePage(object):
         svc = Service(driver_path)
         self.driver = webdriver.Chrome(service=svc,options=chrome_options)
         self.driver.maximize_window()
-
-# from selenium.webdriver.chrome.service import Service
-# svc = Service(BasePage.driver_path)
-# self.driver = webdriver.Chrome(service=svc, options=chrome_options)

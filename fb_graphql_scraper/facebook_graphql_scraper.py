@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
+#%%
 import pandas as pd
 import time
 import json
 from bs4 import BeautifulSoup
 import requests
+from urllib.parse import parse_qs, unquote
 from fb_graphql_scraper.base.base_page import BasePage
 from fb_graphql_scraper.pages.page_optional import PageOptional
 from fb_graphql_scraper.utils.parser import RequestsParser
 from fb_graphql_scraper.utils.locator import *
 from fb_graphql_scraper.utils.utils import *
+
 
 class FacebookSettings:
     """ How to use:
@@ -106,25 +109,31 @@ class FacebookGraphqlScraper(FacebookSettings):
             tmp_creation_array=tmp_creation_array)
         if self.pre_diff_days == diff_days:
             self.counts_of_same_diff_days += 1
+        else:
+            self.counts_of_same_diff_days = 0
         self.pre_diff_days = max(diff_days, self.pre_diff_days)
         if display_progress:
             print(f"To access posts acquired within the past {self.pre_diff_days} days.") # 已取得n日內貼文
         return is_date_exceed_limit(max_days_ago=diff_days, days_limit=days_limit)
     
-    def get_profile_feed(self):
+    def get_profile_feed(self, dict_in:dict={"data-pagelet": "ProfileTilesFeed_0"}):
+        time.sleep(2)
         page_source = (self.page_optional.driver.page_source)
         soup = BeautifulSoup(page_source, "html.parser")
-        target_div = soup.find("div", {"data-pagelet": "ProfileTilesFeed_0"})
+        target_div = soup.find("div", dict_in)
         if target_div:
             texts = target_div.find_all(text=True)
         return texts[2::]
     
     def get_plugin_page_followers(self, fb_username_or_userid):
         """透過嵌入式貼文取得粉絲專頁追蹤人數"""
-        plugin_page_url = f"https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2F{fb_username_or_userid}&tabs=timeline&width=340&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId"
+        plugin_page_url = f"https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2F{fb_username_or_userid}&tabs=timeline&width=340&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId&locale=en_us"
         plugin_response = requests.get(url=plugin_page_url)
         plugin_soup = BeautifulSoup(plugin_response.text, "html.parser")
-        return plugin_soup.find("div", class_="_1drq").text
+        plugin_soup = plugin_soup.find("div", class_="_1drq")
+        if not plugin_soup:
+            return plugin_soup
+        return plugin_soup.text
     
     def format_data(self, res_in, fb_username_or_userid, new_reactions):
         final_res = pd.json_normalize(res_in)
@@ -161,9 +170,19 @@ class FacebookGraphqlScraper(FacebookSettings):
                 reactions_in=each_reactions)
             reactions_out.append(processed_reactions)
         return reactions_out
+    
+    def get_init_payload(self):
+        requests_list = self.page_optional.driver.requests
+        for req in requests_list:
+            if req.url == "https://www.facebook.com/api/graphql/":
+                payload = req.body.decode('utf-8')  # 解碼成字串
+                break
+        first_payload = self.requests_parser.extract_first_payload(payload=payload)
+        return first_payload
+
 
     def get_user_posts(self, fb_username_or_userid: str, days_limit: int = 61, display_progress:bool=True) -> dict:
-        url = "https://www.facebook.com/"+fb_username_or_userid # 建立完整user連結
+        url = f"https://www.facebook.com/{fb_username_or_userid}?locale=en_us" # 建立完整user連結
         self.page_optional.load_next_page(url=url, clear_limit=20)# driver 跳至該連結
         self.page_optional.load_next_page(url=url, clear_limit=20)# 徹底清除requests避免參雜上一用戶資料
         self.requests_parser._clean_res() # 清空所有用於儲存結果的array
@@ -171,36 +190,70 @@ class FacebookGraphqlScraper(FacebookSettings):
         self._set_stop_point() # 設置/重置停止條件 | 停止條件: 瀏覽器無法往下取得更多貼文(n次) or 已取得目標天數內貼文
 
         # If you did not login, click X button
-        if self.fb_account == None: self.page_optional.click_reject_login_button()
-        
+        if self.fb_account == None:
+            self.page_optional.click_reject_login_button()
+            time.sleep(2)
+            self.page_optional.scroll_window_with_parameter("4000")
+            for _ in range(5):
+                try:
+                    init_payload = self.get_init_payload()
+                    payload_variables = init_payload.get("variables")
+                    user_id = str(payload_variables["id"])
+                    doc_id = str(init_payload.get("doc_id"))
+                    print("Collect posts wihout loggin in, script do not display progress")
+                    break
+                except Exception as e:
+                    print("Wait 1 second to load page")
+                    time.sleep(1)
+
         # Get profile information
         try:
-            profile_feed = self.get_profile_feed()
-            if "粉絲專頁" in profile_feed: # 如果粉絲專頁在profile_feed, 另外request plugins page來取得追蹤人數
-                followers = self.get_plugin_page_followers(fb_username_or_userid=fb_username_or_userid)
-                profile_feed.append(followers)
+            if self.fb_account == None:
+                profile_feed = self.get_profile_feed(dict_in={"class": "x1yztbdb"})
+            else:
+                profile_feed = self.get_profile_feed()
+
         except Exception as e:
-            print("Collect profile info failed, return empty array")
-            profile_feed = []
+            try:
+                if self.fb_account != None:
+                    profile_feed = self.get_profile_feed(dict_in={"class": "x1yztbdb"})
+                else:
+                    profile_feed = self.get_profile_feed()
+                    
+            except Exception as e:
+                print("Collect profile info failed, profile info will be empty array.")
+                profile_feed = []
+
+        if "Page" in profile_feed:
+            followers = self.get_plugin_page_followers(fb_username_or_userid=fb_username_or_userid)
+            if followers: profile_feed.append(followers)
+          
+        # collect data without login  
+        if self.fb_account == None:
+            res = self.requests_flow(doc_id = doc_id, fb_username_or_userid=user_id, days_limit=days_limit, profile_feed=profile_feed)
+            return res
 
         # Scroll page
         counts_of_round = 0
-        for _ in range(1000): # 滾動最大次數
+        for _ in range(1000): # max rounds of scrolling page
             self.page_optional.scroll_window()
-            if counts_of_round >= 10:  # 每滾10次檢查一次, 
+            if counts_of_round >= 5:  # Check progress every 5 times you scroll the page
                 if display_progress:
                     print("Check spider progress..")
                 if self.check_progress(days_limit=days_limit,display_progress=display_progress):
                     break
-                elif self.counts_of_same_diff_days >= 3:  # 如果找到的最遠日連續三次都是同一天表示頁面可能滾到底了
+                # If you find that the published dates 
+                # of the collected posts are on the same day five times in a row, 
+                # it may mean that the page has scrolled to the bottom.
+                elif self.counts_of_same_diff_days >= 5:
                     break
                 else:
                     counts_of_round = 0
 
             counts_of_round += 1
-            pause(0.3)
+            pause(0.7)
 
-        # Collect data, 利用driver請求列表當中的GraphQL來取得資料
+        # Collect data, extract graphql from driver requests.
         driver_requests = self.page_optional.driver.requests
         for req in driver_requests:
             req_response, req_url = req.response, req.url
@@ -212,6 +265,78 @@ class FacebookGraphqlScraper(FacebookSettings):
         new_reactions = self.process_reactions(res_in=res_out)
 
         # 建立result
+        final_res = self.format_data(
+            res_in=res_out, 
+            fb_username_or_userid=fb_username_or_userid, 
+            new_reactions=new_reactions
+        )
+        return {
+            "fb_username_or_userid": fb_username_or_userid,
+            "profile": profile_feed,
+            "data": final_res,
+        }
+        
+    def requests_flow(self, doc_id:str, fb_username_or_userid:str, days_limit:int, profile_feed:list):
+        """
+        Fetch more posts from a user's Facebook profile using the requests module.
+
+        Flow:
+            1. Get the document ID of the target Facebook profile.
+            2. Use the requests module to fetch data from the profile.
+            3. Continuously fetch data by checking for new posts until the specified days limit is reached.
+
+        Args:
+            doc_id (str): The document ID of the target Facebook account.
+            fb_username_or_userid (str): The Facebook username or user ID of the target account.
+            days_limit (int): The number of days for which to fetch posts (limits the time range of retrieved posts).
+            profile_feed (list): A list containing the posts retrieved from the target profile.
+
+        Helper Functions:
+            1. get_before_time:
+                Retrieves Facebook posts from a specified time period before the current date.
+
+            2. get_payload:
+                Prepares the payload for the next round of requests to the server.
+
+            3. get_next_page_status:
+                Checks whether the target Facebook user has more posts available for retrieval.
+
+            4. compare_timestamp:
+                Verifies whether a retrieved post falls within the specified time period for collection.
+        """
+
+        url = "https://www.facebook.com/api/graphql/"
+        before_time = get_before_time()
+        loop_limit = 50
+
+        # Extract data
+        for i in range(loop_limit):
+            payload_in = get_payload(
+                doc_id_in=doc_id, 
+                id_in=fb_username_or_userid, 
+                before_time=before_time
+            )
+            response = requests.post(url=url, data=payload_in)
+            body = response.content
+            decoded_body = body.decode("utf-8")
+            body_content = decoded_body.split("\n")
+            self.requests_parser.parse_body(body_content=body_content)
+
+            # Check progress
+            next_page_status = get_next_page_status(body_content=body_content)
+            before_time = str(self.requests_parser.creation_list[-1])
+            if not next_page_status:
+                print("There are no more posts.")
+                break
+
+            # date_object = int(datetime.strptime(before_time, "%Y-%m-%d"))
+            if compare_timestamp(timestamp=int(before_time), days=days_limit):
+                print(f"The scraper has successfully retrieved posts from the past {str(days_limit)} days.")
+                break
+
+        res_out = self.requests_parser.collect_posts()
+        new_reactions = self.process_reactions(res_in=res_out)
+        # create result
         final_res = self.format_data(
             res_in=res_out, 
             fb_username_or_userid=fb_username_or_userid, 

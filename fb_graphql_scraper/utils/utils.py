@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 import concurrent.futures as futures
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import time
+import json
 
 
 # if key: 'subscription_target_id' in feedback, store this feedback
@@ -181,3 +182,60 @@ def is_date_exceed_limit(max_days_ago, days_limit: int = 61):
 
 def pause(pause_time: int = 1):
     time.sleep(pause_time)
+    
+    
+## requests flow
+def get_payload(doc_id_in: str, id_in: str, before_time: str = None):
+    payload_out = {
+        "variables": str('''{"afterTime":null,"beforeTime":'''+before_time+''',"count":3,"cursor":null,"feedLocation":"TIMELINE","feedbackSource":0,"focusCommentID":null,"memorializedSplitTimeFilter":null,"omitPinnedPost":true,"postedBy":{"group":"OWNER"},"privacy":{"exclusivity":"INCLUSIVE","filter":"ALL"},"privacySelectorRenderLocation":"COMET_STREAM","renderLocation":"timeline","scale":3,"stream_count":1,"taggedInOnly":false,"useDefaultActor":false,"id":'''+f"{id_in}"+''',"__relay_internal__pv__CometImmersivePhotoCanUserDisable3DMotionrelayprovider":false,"__relay_internal__pv__IsWorkUserrelayprovider":false,"__relay_internal__pv__IsMergQAPollsrelayprovider":false,"__relay_internal__pv__CometUFIReactionsEnableShortNamerelayprovider":false,"__relay_internal__pv__CometUFIShareActionMigrationrelayprovider":false,"__relay_internal__pv__StoriesArmadilloReplyEnabledrelayprovider":false,"__relay_internal__pv__StoriesTrayShouldShowMetadatarelayprovider":false,"__relay_internal__pv__StoriesRingrelayprovider":false,"__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider":false}'''),
+        "doc_id": doc_id_in
+    }
+    return payload_out
+
+
+def get_next_payload(cursor_in: str, doc_id_in: str, id_in: str):
+    payload_out = {
+        "variables": str({
+            "cursor": cursor_in,
+            "id": id_in, }),
+        "doc_id": doc_id_in
+    }
+    return payload_out
+
+
+def get_next_cursor(body_content_in):
+    for i in range(len(body_content_in)-1, -1, -1):
+        try:
+            json_tail = json.loads(body_content_in[i])
+            nex_cursor = json_tail.get("data").get(
+                "page_info").get("end_cursor")
+            return nex_cursor
+        except AttributeError:
+            print(AttributeError)
+            pass
+
+
+def get_next_page_status(body_content):
+    for each_body in body_content:
+        try:
+            tmp_json = json.loads(each_body)
+            next_page_status = tmp_json.get("data").get(
+                "page_info").get("has_next_page")
+            return next_page_status
+        except Exception as e:
+            pass
+
+
+def compare_timestamp(timestamp: int, days: int) -> bool:
+    timestamp_date = datetime.utcfromtimestamp(timestamp).date()
+    current_date = datetime.utcnow().date()
+    past_date = current_date - timedelta(days=days)
+    # print(f"timestamp_date: {timestamp_date}")
+    return timestamp_date < past_date
+
+
+def get_before_time(time_zone='Asia/Taipei'):
+    location_tz = pytz.timezone(time_zone)
+    current_time = datetime.now(location_tz)
+    timestamp = str(int(current_time.timestamp()))
+    return timestamp
