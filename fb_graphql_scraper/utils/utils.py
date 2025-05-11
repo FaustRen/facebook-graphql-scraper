@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 import concurrent.futures as futures
+import requests
+import re
+from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import pytz
 import time
@@ -182,26 +185,85 @@ def is_date_exceed_limit(max_days_ago, days_limit: int = 61):
 
 def pause(pause_time: int = 1):
     time.sleep(pause_time)
-    
-    
-## requests flow
+
+
 def get_payload(doc_id_in: str, id_in: str, before_time: str = None):
+    variables_dict = {
+        "afterTime": None,
+        "beforeTime": before_time,
+        "count": 3,
+        "cursor": None,
+        "feedLocation": "TIMELINE",
+        "feedbackSource": 0,
+        "focusCommentID": None,
+        "memorializedSplitTimeFilter": None,
+        "omitPinnedPost": True,
+        "postedBy": {"group": "OWNER"},
+        "privacy": {"exclusivity": "INCLUSIVE", "filter": "ALL"},
+        "privacySelectorRenderLocation": "COMET_STREAM",
+        "renderLocation": "timeline",
+        "scale": 3,
+        "stream_count": 1,
+        "taggedInOnly": False,
+        "useDefaultActor": False,
+        "id": id_in,
+        "__relay_internal__pv__CometImmersivePhotoCanUserDisable3DMotionrelayprovider": False,
+        "__relay_internal__pv__IsWorkUserrelayprovider": False,
+        "__relay_internal__pv__IsMergQAPollsrelayprovider": False,
+        "__relay_internal__pv__CometUFIReactionsEnableShortNamerelayprovider": False,
+        "__relay_internal__pv__CometUFIShareActionMigrationrelayprovider": False,
+        "__relay_internal__pv__StoriesArmadilloReplyEnabledrelayprovider": False,
+        "__relay_internal__pv__StoriesTrayShouldShowMetadatarelayprovider": False,
+        "__relay_internal__pv__StoriesRingrelayprovider": False,
+        "__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider": False
+    }
+
     payload_out = {
-        "variables": str('''{"afterTime":null,"beforeTime":'''+before_time+''',"count":3,"cursor":null,"feedLocation":"TIMELINE","feedbackSource":0,"focusCommentID":null,"memorializedSplitTimeFilter":null,"omitPinnedPost":true,"postedBy":{"group":"OWNER"},"privacy":{"exclusivity":"INCLUSIVE","filter":"ALL"},"privacySelectorRenderLocation":"COMET_STREAM","renderLocation":"timeline","scale":3,"stream_count":1,"taggedInOnly":false,"useDefaultActor":false,"id":'''+f"{id_in}"+''',"__relay_internal__pv__CometImmersivePhotoCanUserDisable3DMotionrelayprovider":false,"__relay_internal__pv__IsWorkUserrelayprovider":false,"__relay_internal__pv__IsMergQAPollsrelayprovider":false,"__relay_internal__pv__CometUFIReactionsEnableShortNamerelayprovider":false,"__relay_internal__pv__CometUFIShareActionMigrationrelayprovider":false,"__relay_internal__pv__StoriesArmadilloReplyEnabledrelayprovider":false,"__relay_internal__pv__StoriesTrayShouldShowMetadatarelayprovider":false,"__relay_internal__pv__StoriesRingrelayprovider":false,"__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider":false}'''),
+        "variables": json.dumps(variables_dict),
         "doc_id": doc_id_in
     }
     return payload_out
 
-
-def get_next_payload(cursor_in: str, doc_id_in: str, id_in: str):
+def get_next_payload(
+    doc_id_in:str, 
+    id_in:str, 
+    before_time:str, 
+    cursor_in:str
+):
+    variables_dict = {
+        "afterTime": None,
+        "beforeTime": before_time,
+        "count": 3,
+        "cursor": cursor_in,
+        "feedLocation": "TIMELINE",
+        "feedbackSource": 0,
+        "focusCommentID": None,
+        "memorializedSplitTimeFilter": None,
+        "omitPinnedPost": True,
+        "postedBy": {"group": "OWNER"},
+        "privacy": {"exclusivity": "INCLUSIVE", "filter": "ALL"},
+        "privacySelectorRenderLocation": "COMET_STREAM",
+        "renderLocation": "timeline",
+        "scale": 3,
+        "stream_count": 1,
+        "taggedInOnly": False,
+        "useDefaultActor": False,
+        "id": id_in,
+        "__relay_internal__pv__CometImmersivePhotoCanUserDisable3DMotionrelayprovider": False,
+        "__relay_internal__pv__IsWorkUserrelayprovider": False,
+        "__relay_internal__pv__IsMergQAPollsrelayprovider": False,
+        "__relay_internal__pv__CometUFIReactionsEnableShortNamerelayprovider": False,
+        "__relay_internal__pv__CometUFIShareActionMigrationrelayprovider": False,
+        "__relay_internal__pv__StoriesArmadilloReplyEnabledrelayprovider": False,
+        "__relay_internal__pv__StoriesTrayShouldShowMetadatarelayprovider": False,
+        "__relay_internal__pv__StoriesRingrelayprovider": False,
+        "__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider": False
+    }
     payload_out = {
-        "variables": str({
-            "cursor": cursor_in,
-            "id": id_in, }),
+        "variables": json.dumps(variables_dict),
         "doc_id": doc_id_in
     }
     return payload_out
-
 
 def get_next_cursor(body_content_in):
     for i in range(len(body_content_in)-1, -1, -1):
@@ -211,9 +273,7 @@ def get_next_cursor(body_content_in):
                 "page_info").get("end_cursor")
             return nex_cursor
         except AttributeError:
-            print(AttributeError)
             pass
-
 
 def get_next_page_status(body_content):
     for each_body in body_content:
@@ -224,13 +284,19 @@ def get_next_page_status(body_content):
             return next_page_status
         except Exception as e:
             pass
+    return True # sometimes, scraper can not collect API's "has_next" info, Program choose return True, I will improve this step in the near future.
 
 
-def compare_timestamp(timestamp: int, days: int) -> bool:
+def compare_timestamp(timestamp: int, days_limit: int, display_progress: bool) -> bool:
     timestamp_date = datetime.utcfromtimestamp(timestamp).date()
     current_date = datetime.utcnow().date()
-    past_date = current_date - timedelta(days=days)
-    # print(f"timestamp_date: {timestamp_date}")
+    past_date = current_date - timedelta(days=days_limit)
+    if display_progress:
+        days_remaining = (timestamp_date - past_date).days
+        if days_remaining > 0:
+            print(f"{days_remaining} more days of posts to collect.")
+        else:
+            print("Target days reached or exceeded.")
     return timestamp_date < past_date
 
 
@@ -239,3 +305,14 @@ def get_before_time(time_zone='Asia/Taipei'):
     current_time = datetime.now(location_tz)
     timestamp = str(int(current_time.timestamp()))
     return timestamp
+
+def get_posts_image(post_id:str):
+    url = f"https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2Ftoolbox003%2Fposts%2F{post_id}&show_text=true&width=800"
+    """You can check out the content through the link 
+    to better understand what I'm talking about haha"""
+    response = requests.get(url=url)
+    response.status_code
+    soup = BeautifulSoup(response.text, "html.parser")
+    pattern = re.compile(r"^https://scontent")
+    all_src_links = [tag['src'] for tag in soup.find_all(src=pattern)]
+    return all_src_links

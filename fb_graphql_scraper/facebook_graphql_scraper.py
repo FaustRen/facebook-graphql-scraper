@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-#%%
 import pandas as pd
 import time
 import json
@@ -39,20 +38,26 @@ class FacebookSettings:
         # res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_name, days_limit=days_limit,display_progress=True)
         # print(res)
     """
-    def __init__(self, fb_account: str = None, fb_pwd: str = None, driver_path: str = None):
+    def __init__(self, fb_account: str = None, fb_pwd: str = None, driver_path: str = None, open_browser: bool = False):
         super().__init__()
         self.fb_account = fb_account
         self.fb_pwd = fb_pwd
         self.driver_path = driver_path
-        self._set_spider(driver_path=driver_path)
+        self._set_spider(
+            driver_path=driver_path, 
+            open_browser=open_browser
+        )
         self._set_container()
         self._set_stop_point()
 
-    def _set_spider(self, driver_path):
+    def _set_spider(self, driver_path, open_browser):
         """Description: Auto login account or click "X" button to continue,
         but some accounts cannot display info if you don't login account
         Args: url (str): target user which you want to collect data."""
-        self.base_page = BasePage(driver_path=driver_path)
+        self.base_page = BasePage(
+            driver_path=driver_path, 
+            open_browser=open_browser
+        )
         self.page_optional = PageOptional(
             driver=self.base_page.driver,
             fb_account=self.fb_account,
@@ -79,8 +84,8 @@ class FacebookSettings:
 
 
 class FacebookGraphqlScraper(FacebookSettings):
-    def __init__(self, fb_account: str = None, fb_pwd: str = None, driver_path: str = None):
-        super().__init__(fb_account=fb_account, fb_pwd=fb_pwd, driver_path=driver_path)
+    def __init__(self, fb_account: str = None, fb_pwd: str = None, driver_path: str = None, open_browser: bool = False):
+        super().__init__(fb_account=fb_account, fb_pwd=fb_pwd, driver_path=driver_path,open_browser=open_browser)
 
     def check_progress(self, days_limit: int = 61, display_progress:bool=True):
         """Check the published date of collected posts"""
@@ -160,7 +165,13 @@ class FacebookGraphqlScraper(FacebookSettings):
             'context',
             'video_view_count',
         ]].to_dict(orient="records")
-        return final_res
+        filtered_post_id = []
+        filtered_data = []
+        for each_data in list(final_res):
+            if each_data["post_id"] not in filtered_post_id:
+                filtered_data.append(each_data)
+                filtered_post_id.append(each_data["post_id"])
+        return filtered_data
 
     def process_reactions(self, res_in):
         reactions_out = []
@@ -194,13 +205,13 @@ class FacebookGraphqlScraper(FacebookSettings):
             self.page_optional.click_reject_login_button()
             time.sleep(2)
             self.page_optional.scroll_window_with_parameter("4000")
-            for _ in range(5):
+            for _ in range(30):
                 try:
                     init_payload = self.get_init_payload()
                     payload_variables = init_payload.get("variables")
                     user_id = str(payload_variables["id"])
                     doc_id = str(init_payload.get("doc_id"))
-                    print("Collect posts wihout loggin in, script do not display progress")
+                    print("Collect posts wihout loggin in.")
                     break
                 except Exception as e:
                     print("Wait 1 second to load page")
@@ -230,10 +241,11 @@ class FacebookGraphqlScraper(FacebookSettings):
           
         # collect data without login  
         if self.fb_account == None:
-            res = self.requests_flow(doc_id = doc_id, fb_username_or_userid=user_id, days_limit=days_limit, profile_feed=profile_feed)
+            res = self.requests_flow(doc_id = doc_id, fb_username_or_userid=user_id, days_limit=days_limit, profile_feed=profile_feed, display_progress=display_progress)
             return res
 
         # Scroll page
+        # print("-------------------- Another execute process is started.......... --------------------")
         counts_of_round = 0
         for _ in range(1000): # max rounds of scrolling page
             self.page_optional.scroll_window()
@@ -276,7 +288,7 @@ class FacebookGraphqlScraper(FacebookSettings):
             "data": final_res,
         }
         
-    def requests_flow(self, doc_id:str, fb_username_or_userid:str, days_limit:int, profile_feed:list):
+    def requests_flow(self, doc_id:str, fb_username_or_userid:str, days_limit:int, profile_feed:list, display_progress=True):
         """
         Fetch more posts from a user's Facebook profile using the requests module.
 
@@ -307,16 +319,32 @@ class FacebookGraphqlScraper(FacebookSettings):
 
         url = "https://www.facebook.com/api/graphql/"
         before_time = get_before_time()
-        loop_limit = 50
-
+        loop_limit = 5000
+        is_first_time = True
         # Extract data
         for i in range(loop_limit):
-            payload_in = get_payload(
-                doc_id_in=doc_id, 
-                id_in=fb_username_or_userid, 
-                before_time=before_time
+            if is_first_time:
+                payload_in = get_payload(
+                    doc_id_in=doc_id, 
+                    id_in=fb_username_or_userid, 
+                    before_time=before_time
+                )
+                is_first_time = False
+                
+            # if not the first tiime send request, use function 'get_next_payload' for extracting end cursor to scrape next round
+            elif not is_first_time:
+                next_cursor = get_next_cursor(body_content_in=body_content)
+                payload_in = get_next_payload(
+                    doc_id_in=doc_id, 
+                    id_in=fb_username_or_userid, 
+                    before_time=before_time, # input before_time
+                    cursor_in=next_cursor
+                )
+            
+            response = requests.post(
+                url=url, 
+                data=payload_in,
             )
-            response = requests.post(url=url, data=payload_in)
             body = response.content
             decoded_body = body.decode("utf-8")
             body_content = decoded_body.split("\n")
@@ -324,13 +352,14 @@ class FacebookGraphqlScraper(FacebookSettings):
 
             # Check progress
             next_page_status = get_next_page_status(body_content=body_content)
+            
             before_time = str(self.requests_parser.creation_list[-1])
             if not next_page_status:
                 print("There are no more posts.")
                 break
-
+            
             # date_object = int(datetime.strptime(before_time, "%Y-%m-%d"))
-            if compare_timestamp(timestamp=int(before_time), days=days_limit):
+            if compare_timestamp(timestamp=int(before_time), days_limit=days_limit, display_progress=display_progress):
                 print(f"The scraper has successfully retrieved posts from the past {str(days_limit)} days.")
                 break
 
