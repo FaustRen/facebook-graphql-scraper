@@ -220,14 +220,14 @@ class FacebookGraphqlScraper(FacebookSettings):
         # Get profile information
         try:
             if self.fb_account == None:
-                profile_feed = self.get_profile_feed(dict_in={"class": "x1yztbdb"})
+                profile_feed = self.get_profile_feed(dict_in={"class": "xieb3on"})
             else:
                 profile_feed = self.get_profile_feed()
 
         except Exception as e:
             try:
                 if self.fb_account != None:
-                    profile_feed = self.get_profile_feed(dict_in={"class": "x1yztbdb"})
+                    profile_feed = self.get_profile_feed(dict_in={"class": "xieb3on"})
                 else:
                     profile_feed = self.get_profile_feed()
                     
