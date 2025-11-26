@@ -33,7 +33,7 @@ class PageRoleValue(object):
 
 class PageLocators(object):
     CLOSELOGIN = (
-        By.XPATH, "/html/body/div[1]/div/div[1]/div/div[5]/div/div/div[1]/div/div[2]/div/div/div/div[1]/div/i")
+        By.XPATH, "/html/body/div[2]/div/div[1]/div/div[5]/div/div/div[1]/div/div[2]/div/div/div/div[1]/div/i")
     DISPLAY_MORE = (
         By.XPATH, f"//div[@class='{PageClass.DISPLAY_MORE}' and @role='{PageRoleValue.DISPLAY_MORE}' and text()='{PageText.DISPLAY_MORE}']")
 
