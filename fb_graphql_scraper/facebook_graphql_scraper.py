@@ -110,6 +110,11 @@ class FacebookGraphqlScraper(FacebookSettings):
                             tmp_creation_array.append(int(creation_time))
                     except Exception as e: # 可以直接略過, 表示此graphql內容並非貼文
                         pass
+        # **防止空列表错误**
+        if not tmp_creation_array:
+            print("Warning: No post timestamps found. Skipping progress check.")
+            return False
+            
         diff_days = days_difference_from_now(
             tmp_creation_array=tmp_creation_array)
         if self.pre_diff_days == diff_days:
