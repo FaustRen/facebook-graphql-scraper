@@ -202,7 +202,10 @@ class FacebookGraphqlScraper(FacebookSettings):
 
         # If you did not login, click X button
         if self.fb_account == None:
-            self.page_optional.click_reject_login_button()
+            for _ in range(3):
+                self.page_optional.click_reject_login_button()
+                time.sleep(2)
+            # self.page_optional.click_reject_login_button()
             time.sleep(2)
             self.page_optional.scroll_window_with_parameter("4000")
             for _ in range(30):

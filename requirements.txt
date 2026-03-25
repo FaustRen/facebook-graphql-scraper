@@ -2,3 +2,8 @@ ipython==8.19.0
 pytz==2023.3.post1
 selenium_wire==5.1.0
 tqdm==4.66.1
+pandas>=3.0.1
+bs4==0.0.2
+requests>=2.32.5
+blinker==1.7.0
+setuptools<70
