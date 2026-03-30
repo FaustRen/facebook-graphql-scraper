@@ -1,0 +1,48 @@
+[project]
+name = "fb_scraper_request"
+version = "0.2.5"
+description = "Facebook GraphQL Scraper - No login required, simple API to scrape public Facebook posts"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "MIT"}
+authors = [
+    {name = "Nguyen Minh Quang", email = "quangforwork1203@gmail.com"}
+]
+keywords = ["facebook", "scraper", "graphql", "social-media", "crawler"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "requests>=2.28.0",
+    "pytz",
+    "pip>=26.0.1",
+    "beautifulsoup4>=4.12.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "build>=0.8.0",
+    "twine>=4.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/DOCUTEE/fb_crawl_request"
+Repository = "https://github.com/DOCUTEE/fb_crawl_request"
+Issues = "https://github.com/DOCUTEE/fb_crawl_request/issues"
+
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["fb_scraper_request*"]
