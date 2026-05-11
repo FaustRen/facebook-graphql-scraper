@@ -185,11 +185,20 @@ class FacebookGraphqlScraper(FacebookSettings):
     def get_init_payload(self):
         requests_list = self.page_optional.driver.requests
         for req in requests_list:
-            if req.url == "https://www.facebook.com/api/graphql/":
-                payload = req.body.decode('utf-8')  # 解碼成字串
-                break
-        first_payload = self.requests_parser.extract_first_payload(payload=payload)
-        return first_payload
+            if req.url != "https://www.facebook.com/api/graphql/":
+                continue
+            if not req.body:
+                continue
+            try:
+                payload = req.body.decode("utf-8")
+                first_payload = self.requests_parser.extract_first_payload(payload=payload)
+                payload_variables = first_payload.get("variables") or {}
+                if payload_variables.get("id") and first_payload.get("doc_id"):
+                    return first_payload
+            except Exception:
+                # Some graphql requests do not contain target payload schema.
+                continue
+        return None
 
 
     def get_user_posts(self, fb_username_or_userid: str, days_limit: int = 61, display_progress:bool=True) -> dict:
@@ -202,20 +211,31 @@ class FacebookGraphqlScraper(FacebookSettings):
 
         # If you did not login, click X button
         if self.fb_account == None:
-            self.page_optional.click_reject_login_button()
-            time.sleep(2)
-            self.page_optional.scroll_window_with_parameter("4000")
-            for _ in range(30):
-                try:
-                    init_payload = self.get_init_payload()
+            time.sleep(5)
+            # Popup may show more than once in headless mode.
+            for _ in range(3):
+                self.page_optional.click_reject_login_button()
+                time.sleep(2)
+            time.sleep(5)
+            self.page_optional.scroll_window_with_parameter("6000")
+            init_payload = None
+            for _ in range(60):
+                init_payload = self.get_init_payload()
+                if init_payload:
                     payload_variables = init_payload.get("variables")
                     user_id = str(payload_variables["id"])
                     doc_id = str(init_payload.get("doc_id"))
                     print("Collect posts wihout loggin in.")
                     break
-                except Exception as e:
-                    print("Wait 1 second to load page")
-                    time.sleep(1)
+                print("Wait 1 second to load page")
+                self.page_optional.scroll_window_with_parameter("800")
+                time.sleep(1)
+
+            if not init_payload:
+                raise RuntimeError(
+                    "Failed to extract initial graphql payload. "
+                    "Please retry or set open_browser=True for diagnostics."
+                )
 
         # Get profile information
         try:
