@@ -118,7 +118,8 @@ class PageOptional(object):
             EC.visibility_of_element_located((self.locator.CLOSELOGIN)))
             reject_login_button.click()
         except Exception as e:
-            print(f"Click reject button failed, message:{e}")
+            short_message = getattr(e, "msg", str(e)).split("Stacktrace:")[0].strip()
+            print(f"Click reject button skipped, message: {short_message}")
 
     def quit_driver(self):
         self.driver.quit()
