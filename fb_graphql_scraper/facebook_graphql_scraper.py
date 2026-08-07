@@ -110,6 +110,10 @@ class FacebookGraphqlScraper(FacebookSettings):
                             tmp_creation_array.append(int(creation_time))
                     except Exception as e: # 可以直接略過, 表示此graphql內容並非貼文
                         pass
+        if not tmp_creation_array:
+            if display_progress:
+                print("No post timestamp parsed in current progress check.")
+            return False
         diff_days = days_difference_from_now(
             tmp_creation_array=tmp_creation_array)
         if self.pre_diff_days == diff_days:
@@ -142,13 +146,14 @@ class FacebookGraphqlScraper(FacebookSettings):
     
     def format_data(self, res_in, fb_username_or_userid, new_reactions):
         final_res = pd.json_normalize(res_in)
-        final_res['context'] = self.requests_parser.context_list
+        row_count = len(final_res)
+        final_res['context'] = (self.requests_parser.context_list + [None] * row_count)[:row_count]
         final_res['username_or_userid'] = fb_username_or_userid
-        final_res['owing_profile'] = self.requests_parser.owning_profile
-        final_res['sub_reactions'] = new_reactions
+        final_res['owing_profile'] = (self.requests_parser.owning_profile + [None] * row_count)[:row_count]
+        final_res['sub_reactions'] = (new_reactions + [{}] * row_count)[:row_count]
         final_res['post_url'] = "https://www.facebook.com/" + final_res['post_id']
-        final_res['time'] = self.requests_parser.creation_list
-        final_res['published_date'] = pd.to_datetime(final_res['time'], unit='s')
+        final_res['time'] = (self.requests_parser.creation_list + [None] * row_count)[:row_count]
+        final_res['published_date'] = pd.to_datetime(final_res['time'], unit='s', errors='coerce')
         final_res['published_date2'] = final_res['published_date'].dt.strftime('%Y-%m-%d')
         final_res = final_res[[
             'post_id',
@@ -204,7 +209,7 @@ class FacebookGraphqlScraper(FacebookSettings):
     def get_user_posts(self, fb_username_or_userid: str, days_limit: int = 61, display_progress:bool=True) -> dict:
         url = f"https://www.facebook.com/{fb_username_or_userid}?locale=en_us" # 建立完整user連結
         self.page_optional.load_next_page(url=url, clear_limit=20)# driver 跳至該連結
-        self.page_optional.load_next_page(url=url, clear_limit=20)# 徹底清除requests避免參雜上一用戶資料
+        # self.page_optional.load_next_page(url=url, clear_limit=20)# 徹底清除requests避免參雜上一用戶資料
         self.requests_parser._clean_res() # 清空所有用於儲存結果的array
         self._set_container() # 清空用於儲存貼文資訊的array
         self._set_stop_point() # 設置/重置停止條件 | 停止條件: 瀏覽器無法往下取得更多貼文(n次) or 已取得目標天數內貼文
@@ -213,22 +218,25 @@ class FacebookGraphqlScraper(FacebookSettings):
         if self.fb_account == None:
             time.sleep(5)
             # Popup may show more than once in headless mode.
-            for _ in range(3):
+            for _ in range(2):
                 self.page_optional.click_reject_login_button()
                 time.sleep(2)
-            time.sleep(5)
-            self.page_optional.scroll_window_with_parameter("6000")
+            time.sleep(3)
             init_payload = None
+
+            for _ in range(3):
+                self.page_optional.scroll_window_with_parameter("8000")
             for _ in range(60):
                 init_payload = self.get_init_payload()
                 if init_payload:
                     payload_variables = init_payload.get("variables")
                     user_id = str(payload_variables["id"])
                     doc_id = str(init_payload.get("doc_id"))
+                    self.init_cursor = init_payload.get('variables').get('cursor')
                     print("Collect posts wihout loggin in.")
                     break
                 print("Wait 1 second to load page")
-                self.page_optional.scroll_window_with_parameter("800")
+                self.page_optional.scroll_window_with_parameter("1000")
                 time.sleep(1)
 
             if not init_payload:
@@ -341,15 +349,18 @@ class FacebookGraphqlScraper(FacebookSettings):
         before_time = get_before_time()
         loop_limit = 5000
         is_first_time = True
+        no_creation_rounds = 0
         # Extract data
         for i in range(loop_limit):
             if is_first_time:
                 payload_in = get_payload(
                     doc_id_in=doc_id, 
                     id_in=fb_username_or_userid, 
-                    before_time=before_time
+                    before_time=before_time,
+                    cursor_in=str(self.init_cursor)
                 )
                 is_first_time = False
+                
                 
             # if not the first tiime send request, use function 'get_next_payload' for extracting end cursor to scrape next round
             elif not is_first_time:
@@ -368,18 +379,36 @@ class FacebookGraphqlScraper(FacebookSettings):
             body = response.content
             decoded_body = body.decode("utf-8")
             body_content = decoded_body.split("\n")
+            pre_creation_len = len(self.requests_parser.creation_list)
             self.requests_parser.parse_body(body_content=body_content)
+            latest_creation_time = None
+            new_creation_list = self.requests_parser.creation_list[pre_creation_len:]
+            if new_creation_list:
+                latest_creation_time = new_creation_list[-1]
+            elif self.requests_parser.creation_list:
+                latest_creation_time = self.requests_parser.creation_list[-1]
 
             # Check progress
             next_page_status = get_next_page_status(body_content=body_content)
-            
-            before_time = str(self.requests_parser.creation_list[-1])
+
+            if latest_creation_time is not None:
+                before_time = str(latest_creation_time)
+                no_creation_rounds = 0
+            else:
+                no_creation_rounds += 1
+                if display_progress:
+                    print("No creation_time parsed from current graphql response; retrying next page.")
+
             if not next_page_status:
                 print("There are no more posts.")
                 break
+
+            if no_creation_rounds >= 5:
+                print("Unable to parse post timestamps for multiple rounds, stop scraping early.")
+                break
             
             # date_object = int(datetime.strptime(before_time, "%Y-%m-%d"))
-            if compare_timestamp(timestamp=int(before_time), days_limit=days_limit, display_progress=display_progress):
+            if latest_creation_time is not None and compare_timestamp(timestamp=int(before_time), days_limit=days_limit, display_progress=display_progress):
                 print(f"The scraper has successfully retrieved posts from the past {str(days_limit)} days.")
                 break
 
