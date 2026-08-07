@@ -14,7 +14,6 @@ pip install facebook-graphql-scraper
 ipython==8.19.0
 pytz==2023.3.post1
 selenium_wire==5.1.0
-tqdm==4.66.1
 ```
 
 # Support Me

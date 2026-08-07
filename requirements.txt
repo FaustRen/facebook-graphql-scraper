@@ -1,4 +1,5 @@
 ipython==8.19.0
 pytz==2023.3.post1
 selenium_wire==5.1.0
-tqdm==4.66.1
+pytest>=8.0.0
+pytest-mock>=3.12.0

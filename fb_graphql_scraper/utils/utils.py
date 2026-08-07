@@ -187,12 +187,12 @@ def pause(pause_time: int = 1):
     time.sleep(pause_time)
 
 
-def get_payload(doc_id_in: str, id_in: str, before_time: str = None):
+def get_payload(doc_id_in: str, id_in: str, before_time: str = None, cursor_in: str = None):
     variables_dict = {
         "afterTime": None,
         "beforeTime": before_time,
         "count": 3,
-        "cursor": None,
+        "cursor": cursor_in,
         "feedLocation": "TIMELINE",
         "feedbackSource": 0,
         "focusCommentID": None,
@@ -215,7 +215,31 @@ def get_payload(doc_id_in: str, id_in: str, before_time: str = None):
         "__relay_internal__pv__StoriesArmadilloReplyEnabledrelayprovider": False,
         "__relay_internal__pv__StoriesTrayShouldShowMetadatarelayprovider": False,
         "__relay_internal__pv__StoriesRingrelayprovider": False,
-        "__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider": False
+        "__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider": False,
+        "referringStoryRenderLocation": None,
+        "trackingCode": None,
+        "__relay_internal__pv__GHLShouldChangeAdIdFieldNamerelayprovider": False,
+        "__relay_internal__pv__GHLShouldChangeSponsoredDataFieldNamerelayprovider": False,
+        "__relay_internal__pv__CometFeedStory_enable_reactor_facepilerelayprovider": False,
+        "__relay_internal__pv__CometFeedStory_enable_social_bubblesrelayprovider": False,
+        "__relay_internal__pv__CometFeedStory_enable_post_permalink_white_space_clickrelayprovider": False,
+        "__relay_internal__pv__CometUFICommentActionLinksRewriteEnabledrelayprovider": False,
+        "__relay_internal__pv__CometUFICommentAvatarStickerAnimatedImagerelayprovider": False,
+        "__relay_internal__pv__TestPilotShouldIncludeDemoAdUseCaserelayprovider": False,
+        "__relay_internal__pv__FBReels_deprecate_short_form_video_context_gkrelayprovider": False,
+        "__relay_internal__pv__FBReels_enable_view_dubbed_audio_type_gkrelayprovider": False,
+        "__relay_internal__pv__CometFeedShareMedia_shouldPrefetchShareImagerelayprovider": False,
+        "__relay_internal__pv__WorkCometIsEmployeeGKProviderrelayprovider": False,
+        "__relay_internal__pv__FBReelsMediaFooter_comet_enable_reels_ads_gkrelayprovider": True,
+        "__relay_internal__pv__CometUFICommentAutoTranslationTyperelayprovider": "AUTO_TRANSLATE",
+        "__relay_internal__pv__CometUFISingleLineUFIrelayprovider": False,
+        "__relay_internal__pv__relay_provider_comet_ufi_ssr_seo_deferrelayprovider": True,
+        "__relay_internal__pv__CometUFI_dedicated_comment_routable_dialog_gkrelayprovider": True,
+        "__relay_internal__pv__ReelsIFUCard_reelsIFULikeCountrelayprovider": False,
+        "__relay_internal__pv__FBReelsIFUTileContent_reelsIFUPlayOnHoverrelayprovider": False,
+        "__relay_internal__pv__GroupsCometGYSJFeedItemHeightrelayprovider": 150,
+        "__relay_internal__pv__ShouldEnableBakedInTextStoriesrelayprovider": False,
+        "__relay_internal__pv__StoriesShouldIncludeFbNotesrelayprovider": False
     }
 
     payload_out = {
@@ -257,7 +281,31 @@ def get_next_payload(
         "__relay_internal__pv__StoriesArmadilloReplyEnabledrelayprovider": False,
         "__relay_internal__pv__StoriesTrayShouldShowMetadatarelayprovider": False,
         "__relay_internal__pv__StoriesRingrelayprovider": False,
-        "__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider": False
+        "__relay_internal__pv__EventCometCardImage_prefetchEventImagerelayprovider": False,
+        "referringStoryRenderLocation": None,
+        "trackingCode": None,
+        "__relay_internal__pv__GHLShouldChangeAdIdFieldNamerelayprovider": False,
+        "__relay_internal__pv__GHLShouldChangeSponsoredDataFieldNamerelayprovider": False,
+        "__relay_internal__pv__CometFeedStory_enable_reactor_facepilerelayprovider": False,
+        "__relay_internal__pv__CometFeedStory_enable_social_bubblesrelayprovider": False,
+        "__relay_internal__pv__CometFeedStory_enable_post_permalink_white_space_clickrelayprovider": False,
+        "__relay_internal__pv__CometUFICommentActionLinksRewriteEnabledrelayprovider": False,
+        "__relay_internal__pv__CometUFICommentAvatarStickerAnimatedImagerelayprovider": False,
+        "__relay_internal__pv__TestPilotShouldIncludeDemoAdUseCaserelayprovider": False,
+        "__relay_internal__pv__FBReels_deprecate_short_form_video_context_gkrelayprovider": False,
+        "__relay_internal__pv__FBReels_enable_view_dubbed_audio_type_gkrelayprovider": False,
+        "__relay_internal__pv__CometFeedShareMedia_shouldPrefetchShareImagerelayprovider": False,
+        "__relay_internal__pv__WorkCometIsEmployeeGKProviderrelayprovider": False,
+        "__relay_internal__pv__FBReelsMediaFooter_comet_enable_reels_ads_gkrelayprovider": True,
+        "__relay_internal__pv__CometUFICommentAutoTranslationTyperelayprovider": "AUTO_TRANSLATE",
+        "__relay_internal__pv__CometUFISingleLineUFIrelayprovider": False,
+        "__relay_internal__pv__relay_provider_comet_ufi_ssr_seo_deferrelayprovider": True,
+        "__relay_internal__pv__CometUFI_dedicated_comment_routable_dialog_gkrelayprovider": True,
+        "__relay_internal__pv__ReelsIFUCard_reelsIFULikeCountrelayprovider": False,
+        "__relay_internal__pv__FBReelsIFUTileContent_reelsIFUPlayOnHoverrelayprovider": False,
+        "__relay_internal__pv__GroupsCometGYSJFeedItemHeightrelayprovider": 150,
+        "__relay_internal__pv__ShouldEnableBakedInTextStoriesrelayprovider": False,
+        "__relay_internal__pv__StoriesShouldIncludeFbNotesrelayprovider": False
     }
     payload_out = {
         "variables": json.dumps(variables_dict),
