@@ -38,6 +38,8 @@ class FacebookSettings:
         # res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_name, days_limit=days_limit,display_progress=True)
         # print(res)
     """
+    profile_picture = None
+
     def __init__(self, fb_account: str = None, fb_pwd: str = None, driver_path: str = None, open_browser: bool = False):
         super().__init__()
         self.fb_account = fb_account
@@ -70,6 +72,7 @@ class FacebookSettings:
         self.post_id_list = []
         self.reaction_count_list = []
         self.profile_feed = []
+        self.profile_picture = None
         self.res = {
             "post_caption": [],
             "post_date": [],
@@ -134,6 +137,14 @@ class FacebookGraphqlScraper(FacebookSettings):
             texts = target_div.find_all(text=True)
         return texts[2::]
     
+    def get_profile_picture(self):
+        """Reuse the html already loaded by selenium to get the main profile picture."""
+        try:
+            return extract_profile_picture(html=self.page_optional.driver.page_source)
+        except Exception:
+            print("Collect profile picture failed, profile picture will be None.")
+            return None
+
     def get_plugin_page_followers(self, fb_username_or_userid):
         """透過嵌入式貼文取得粉絲專頁追蹤人數"""
         plugin_page_url = f"https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2F{fb_username_or_userid}&tabs=timeline&width=340&height=500&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId&locale=en_us"
@@ -266,6 +277,8 @@ class FacebookGraphqlScraper(FacebookSettings):
         if "Page" in profile_feed:
             followers = self.get_plugin_page_followers(fb_username_or_userid=fb_username_or_userid)
             if followers: profile_feed.append(followers)
+
+        self.profile_picture = self.get_profile_picture()
           
         # collect data without login  
         if self.fb_account == None:
@@ -313,6 +326,7 @@ class FacebookGraphqlScraper(FacebookSettings):
         return {
             "fb_username_or_userid": fb_username_or_userid,
             "profile": profile_feed,
+            "profile_picture": self.profile_picture,
             "data": final_res,
         }
         
@@ -423,5 +437,6 @@ class FacebookGraphqlScraper(FacebookSettings):
         return {
             "fb_username_or_userid": fb_username_or_userid,
             "profile": profile_feed,
+            "profile_picture": self.profile_picture,
             "data": final_res,
         }
