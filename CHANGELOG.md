@@ -6,6 +6,26 @@ This project adheres to [Semantic Versioning](https://semver.org/) and follows t
 
 ---
 
+## [1.2.0] - 2026-08-18
+
+### Added
+
+* Added profile picture URL extraction to Facebook profile scraping results
+* Added a new top-level `profile_picture` field to the result returned by `get_user_posts()`
+* Added support for extracting profile pictures from the existing Facebook profile page source without additional navigation or requests
+
+### Changed
+
+* Extended profile metadata extraction while preserving the existing post scraping and GraphQL workflow
+
+### Notes
+
+* The new `profile_picture` field is additive and does not modify the existing `profile` or `data` output structure
+* Profile picture extraction is best-effort and may return an empty value if Facebook's page structure changes or no suitable profile image can be identified
+* Facebook page structure is not a public stable API and may change in future releases
+
+---
+
 ## [1.1.7] - 2026-08-18
 
 ### Fixed

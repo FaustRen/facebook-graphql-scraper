@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import pytz
 import time
 import json
+from typing import Optional
 
 
 # if key: 'subscription_target_id' in feedback, store this feedback
@@ -366,3 +367,65 @@ def get_posts_image(post_id:str):
     pattern = re.compile(r"^https://scontent")
     all_src_links = [tag['src'] for tag in soup.find_all(src=pattern)]
     return all_src_links
+
+
+PROFILE_PICTURE_ALT_HINTS = (
+    "profile picture",
+    "profile photo",
+    "個人檔案相片",
+    "大頭貼照",
+)
+PROFILE_PICTURE_LOG_NAMES = (
+    "profilepicthumbnail",
+    "profilepic",
+)
+
+
+def _is_facebook_image_url(url) -> bool:
+    return isinstance(url, str) and url.startswith("https://") and "fbcdn.net" in url
+
+
+def _get_image_url(tag) -> Optional[str]:
+    for attr in ("src", "xlink:href", "href"):
+        url = tag.get(attr)
+        if _is_facebook_image_url(url):
+            return url
+    return None
+
+
+def extract_profile_picture(html: str) -> Optional[str]:
+    """Extract the main profile picture url from an already loaded facebook profile page.
+
+    Returns None when no reliable candidate is found, extraction is supplemental
+    and must never break the scraping flow.
+    """
+    if not html:
+        return None
+    try:
+        soup = BeautifulSoup(html, "html.parser")
+    except Exception:
+        return None
+
+    # 1. Page metadata, available on both fan pages and personal profiles.
+    for meta_tag in soup.find_all("meta", property="og:image"):
+        url = meta_tag.get("content")
+        if _is_facebook_image_url(url):
+            return url
+
+    # 2. Images labelled as profile picture by facebook itself.
+    for tag in soup.find_all(["img", "image"]):
+        log_name = (tag.get("data-imgperflogname") or "").lower()
+        alt_text = (tag.get("alt") or "").lower()
+        if any(name in log_name for name in PROFILE_PICTURE_LOG_NAMES) \
+                or any(hint in alt_text for hint in PROFILE_PICTURE_ALT_HINTS):
+            url = _get_image_url(tag)
+            if url:
+                return url
+
+    # 3. Both page and personal avatars are rendered as <image> inside an <svg> mask,
+    # while the cover photo and icons are plain <img> tags.
+    for tag in soup.find_all("image"):
+        url = _get_image_url(tag)
+        if url:
+            return url
+    return None

@@ -12,6 +12,7 @@ from fb_graphql_scraper.utils.utils import (
     find_owning_profile,
     days_difference_from_now,
     is_date_exceed_limit,
+    extract_profile_picture,
 )
 
 # ── Fixtures ────────────────────────────────────────────────────────────────
@@ -151,3 +152,47 @@ class TestIsDateExceedLimit:
     def test_exactly_at_limit(self):
         # max_days_ago == days_limit should NOT exceed (strictly greater than)
         assert is_date_exceed_limit(max_days_ago=61, days_limit=61) is False
+
+
+# ── extract_profile_picture ──────────────────────────────────────
+
+class TestExtractProfilePicture:
+    def test_extracts_from_og_image_meta(self):
+        html = """
+        <html><head>
+        <meta property="og:image" content="https://scontent.xx.fbcdn.net/v/avatar.jpg"/>
+        </head><body><img src="https://static.xx.fbcdn.net/rsrc.php/icon.png"/></body></html>
+        """
+        assert extract_profile_picture(html) == "https://scontent.xx.fbcdn.net/v/avatar.jpg"
+
+    def test_extracts_from_labelled_image(self):
+        html = """
+        <html><body>
+        <img src="https://static.xx.fbcdn.net/rsrc.php/logo.png" alt="Facebook"/>
+        <svg><image xlink:href="https://scontent.xx.fbcdn.net/v/avatar.jpg"
+                    alt="Yuwei Shao, profile picture"></image></svg>
+        </body></html>
+        """
+        assert extract_profile_picture(html) == "https://scontent.xx.fbcdn.net/v/avatar.jpg"
+
+    def test_extracts_svg_avatar_as_fallback(self):
+        html = """
+        <html><body>
+        <img src="https://scontent.xx.fbcdn.net/v/banner.jpg" data-imgperflogname="profileCoverPhoto"/>
+        <img src="https://static.xx.fbcdn.net/rsrc.php/icon.png" width="20" height="20"/>
+        <svg><image xlink:href="https://scontent.xx.fbcdn.net/v/avatar.jpg" width="100%" height="100%"></image></svg>
+        </body></html>
+        """
+        assert extract_profile_picture(html) == "https://scontent.xx.fbcdn.net/v/avatar.jpg"
+
+    def test_returns_none_when_no_candidate(self):
+        html = "<html><body><img src='https://example.com/logo.png' width='168' height='168'/></body></html>"
+        assert extract_profile_picture(html) is None
+
+    def test_returns_none_on_missing_attributes(self):
+        html = "<html><body><img/><image/><meta property='og:image'/></body></html>"
+        assert extract_profile_picture(html) is None
+
+    def test_returns_none_on_empty_html(self):
+        assert extract_profile_picture("") is None
+        assert extract_profile_picture(None) is None
