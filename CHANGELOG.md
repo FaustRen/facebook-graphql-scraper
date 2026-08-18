@@ -6,6 +6,28 @@ This project adheres to [Semantic Versioning](https://semver.org/) and follows t
 
 ---
 
+## [1.1.7] - 2026-08-18
+
+### Fixed
+
+* Fixed anonymous Facebook timeline scraping failures caused by a newly required GraphQL Relay variable in `ProfileCometTimelineFeedRefetchQuery`
+* Added `__relay_internal__pv__StoriesShouldEnablePhotosensitiveContentWarningrelayprovider` to `get_payload()` and `get_next_payload()` to match Facebook's currently required timeline GraphQL request structure
+* Restored post parsing and pagination after GraphQL requests began returning:
+
+  `missing_required_variable_value`
+
+* Prevented the upstream GraphQL request failure from resulting in empty parser output and eventually surfacing as:
+
+  `KeyError: 'post_id'`
+
+### Notes
+
+* This release is a compatibility hotfix for a change in Facebook's internal timeline GraphQL query
+* Only the newly required Relay variable was added; other observed GraphQL runtime value differences were intentionally left unchanged because they are not currently required for successful scraping
+* Facebook's GraphQL request structure is not a public stable API and may change again in future releases
+
+---
+
 ## [1.1.6] - 2026-08-07
 
 ### Changed
