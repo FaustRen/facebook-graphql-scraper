@@ -229,6 +229,9 @@ class TestRequestsFlow:
         scraper = _make_scraper()
         from fb_graphql_scraper.utils.parser import RequestsParser
         scraper.requests_parser = RequestsParser(driver=MagicMock())
+        scraper.requests_parser._clean_res()
+        scraper.init_cursor = None
+        scraper.init_variables = {"id": "10001", "cursor": None}
 
         graphql_lines = [
             json.dumps({
@@ -264,3 +267,48 @@ class TestRequestsFlow:
         assert len(result["data"]) == 1
         assert result["data"][0]["post_id"] == "p1"
         assert result["data"][0]["time"] is None
+
+
+class TestRequestsFlowHelpers:
+    def test_get_graphql_error_returns_message(self):
+        scraper_cls = _import_scraper()
+        body = [json.dumps({"errors": [{"message": "missing_required_variable_value"}]})]
+        assert scraper_cls._get_graphql_error(body) == "missing_required_variable_value"
+
+    def test_get_graphql_error_returns_none_for_normal_response(self):
+        scraper_cls = _import_scraper()
+        body = [json.dumps({"data": {"page_info": {"has_next_page": True}}}), ""]
+        assert scraper_cls._get_graphql_error(body) is None
+
+    def test_filter_posts_by_days_drops_old_posts(self):
+        import time
+        scraper_cls = _import_scraper()
+        now = int(time.time())
+        posts = [
+            {"post_id": "new", "time": now - 86400},
+            {"post_id": "old", "time": now - 40 * 86400},
+            {"post_id": "unknown", "time": None},
+        ]
+        kept = [p["post_id"] for p in scraper_cls._filter_posts_by_days(posts, days_limit=20)]
+        assert kept == ["new", "unknown"]
+
+    def test_requests_flow_stops_on_graphql_error(self):
+        scraper = _make_scraper()
+        from fb_graphql_scraper.utils.parser import RequestsParser
+        scraper.requests_parser = RequestsParser(driver=MagicMock())
+        scraper.requests_parser._clean_res()
+        scraper.init_cursor = None
+        scraper.init_variables = {"id": "10001", "cursor": None}
+
+        response = MagicMock()
+        response.status_code = 200
+        response.content = json.dumps({"errors": [{"message": "boom"}]}).encode("utf-8")
+
+        with patch("fb_graphql_scraper.facebook_graphql_scraper.requests.post", return_value=response) as mock_post:
+            result = scraper.requests_flow(
+                doc_id="123", fb_username_or_userid="10001",
+                days_limit=30, profile_feed=[], display_progress=False,
+            )
+
+        assert mock_post.call_count == 1
+        assert result["data"] == []

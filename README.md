@@ -45,23 +45,10 @@ from fb_graphql_scraper.facebook_graphql_scraper import FacebookGraphqlScraper a
 if __name__ == "__main__":
     facebook_user_name = "love.yuweishao"
     facebook_user_id = "100044253168423"
-    days_limit = 100 # Number of days within which to scrape posts
-    driver_path = "/Users/hongshangren/Downloads/chromedriver-mac-arm64_136/chromedriver" 
+    days_limit = 20 # Number of days within which to scrape posts
+    driver_path = "/Users/hongshangren/Downloads/chromedriver-mac-arm64_157/chromedriver" 
     fb_spider = fb_graphql_scraper(driver_path=driver_path, open_browser=False)
     res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_id, days_limit=days_limit,display_progress=True)
-    # print(res)
-
-
-## Example.2 - login in your facebook account to collect data
-# if __name__ == "__main__":
-    # facebook_user_name = "love.yuweishao"
-    # facebook_user_id = "100044253168423"
-    # fb_account = "facebook_account"
-    # fb_pwd = "facebook_paswword"
-    # days_limit = 30 # Number of days within which to scrape posts
-    # driver_path = "/Users/hongshangren/Downloads/chromedriver-mac-arm64_136/chromedriver" 
-    # fb_spider = fb_graphql_scraper(fb_account=fb_account,fb_pwd=fb_pwd, driver_path=driver_path, open_browser=False)
-    # res = fb_spider.get_user_posts(fb_username_or_userid=facebook_user_name, days_limit=days_limit,display_progress=True)
     # print(res)
     
 
@@ -100,130 +87,180 @@ if __name__ == "__main__":
 
 ## Result example
 
-```python
-{'fb_username_or_userid': '100044253168423',
- 'profile': ['任何工作事宜請洽 高先生',
-  '聯絡信箱：hawa00328@gmail.com',
-  '聯絡電話：0975-386-266',
-  'Page',
-  ' · 演員',
-  'hawa00328@gmail.com',
-  'Not yet rated (0 Reviews)',
-  '\ufeff',
-  '1,484,829 followers'],
- 'data': [{'post_id': '1245565493595211',
-   'post_url': 'https://www.facebook.com/1245565493595211',
-   'username_or_userid': '100044253168423',
-   'owing_profile': {'__typename': 'User',
-    'name': '邵雨薇',
-    'short_name': '邵雨薇',
-    'id': '100044253168423'},
-   'published_date': Timestamp('2025-05-09 09:14:42'),
-   'published_date2': '2025-05-09',
-   'time': 1746782082,
-   'reaction_count.count': 3566,
-   'comment_rendering_instance.comments.total_count': 55,
-   'share_count.count': 13,
-   'sub_reactions': {'讚': 3273, '大心': 283, '加油': 6, '哈': 2, '哇': 2},
-   'context': '溫柔的大貓咪\n緬因貓～～～～～～\n好喜歡❤️❤️❤️',
-   'video_view_count': None},
-  {'post_id': '1243688160449611',
-   'post_url': 'https://www.facebook.com/1243688160449611',
-   'username_or_userid': '100044253168423',
-   'owing_profile': {'__typename': 'User',
-    'name': '邵雨薇',
-    'short_name': '邵雨薇',
-    'id': '100044253168423'},
-   'published_date': Timestamp('2025-05-06 12:38:46'),
-   'published_date2': '2025-05-06',
-   'time': 1746535126,
-   'reaction_count.count': 3270,
-   'comment_rendering_instance.comments.total_count': 59,
-   'share_count.count': 22,
-   'sub_reactions': {'讚': 2978, '大心': 282, '加油': 8, '哈': 2},
-   'context': '💛',
-   'video_view_count': None},
-  {'post_id': '1242879413863819',
-   'post_url': 'https://www.facebook.com/1242879413863819',
-   'username_or_userid': '100044253168423',
-   'owing_profile': {'__typename': 'User',
-    'name': '邵雨薇',
-    'short_name': '邵雨薇',
-    'id': '100044253168423'},
-   'published_date': Timestamp('2025-05-05 10:02:32'),
-   'published_date2': '2025-05-05',
-   'time': 1746439352,
-   'reaction_count.count': 3868,
-   'comment_rendering_instance.comments.total_count': 55,
-   'share_count.count': 28,
-   'sub_reactions': {'讚': 3493, '大心': 362, '加油': 9, '哈': 3, '哇': 1},
-   'context': '愛的表達方式有很多，\n真誠言語直接的愛、\n以行動表達溫度的愛，\n又或是充滿美麗魔法的愛！ \n\n母親節就給媽媽一份加滿心意以及滿滿美麗的禮物吧！\n#潤姬桃子 的愛的魔法\n祝媽媽母親節快樂💗\n\n@uruhime.momoko.official',
-   'video_view_count': None},
-  {'post_id': '1239140660904361',
-   'post_url': 'https://www.facebook.com/1239140660904361',
-   'username_or_userid': '100044253168423',
-   'owing_profile': {'__typename': 'User',
-    'name': '邵雨薇',
-    'short_name': '邵雨薇',
-    'id': '100044253168423'},
-   'published_date': Timestamp('2025-04-30 09:01:18'),
-   'published_date2': '2025-04-30',
-   'time': 1746003678,
-   'reaction_count.count': 3455,
-   'comment_rendering_instance.comments.total_count': 42,
-   'share_count.count': 12,
-   'sub_reactions': {'讚': 3249, '大心': 199, '哈': 4, '加油': 2, '哇': 1},
-   'context': '紐約碎片。\n\n沒注意到主人在，\n拍完往後轉抖了一大下。\n點點頭🙂\u200d↕️對了主人比個大拇指（意義不明？）',
-   'video_view_count': None},
-  {'post_id': '1237090651109362',
-   'post_url': 'https://www.facebook.com/1237090651109362',
-   'username_or_userid': '100044253168423',
-   'owing_profile': {'__typename': 'User',
-    'name': '邵雨薇',
-    'short_name': '邵雨薇',
-    'id': '100044253168423'},
-   'published_date': Timestamp('2025-04-27 12:56:19'),
-   'published_date2': '2025-04-27',
-   'time': 1745758579,
-   'reaction_count.count': 4682,
-   'comment_rendering_instance.comments.total_count': 25,
-   'share_count.count': 12,
-   'sub_reactions': {'讚': 4354, '大心': 311, '加油': 11, '哈': 5, '哇': 1},
-   'context': '回家抱老迪 （請自動忽略阿爸）\n迪底撿回來也11年了，希望你也健康幸福。\n希望家人們都平安健康快樂。\n\n#迪底是阿筆的第一個兄弟',
-   'video_view_count': None},
-  {'post_id': '1236471601171267',
-   'post_url': 'https://www.facebook.com/1236471601171267',
-   'username_or_userid': '100044253168423',
-   'owing_profile': {'__typename': 'User',
-    'name': '邵雨薇',
-    'short_name': '邵雨薇',
-    'id': '100044253168423'},
-   'published_date': Timestamp('2025-04-26 16:23:29'),
-   'published_date2': '2025-04-26',
-   'time': 1745684609,
-   'reaction_count.count': 3004,
-   'comment_rendering_instance.comments.total_count': 41,
-   'share_count.count': 13,
-   'sub_reactions': {'讚': 2789, '大心': 210, '哈': 3, '加油': 2},
-   'context': '剛在坐高鐵時，覺得時間實在是過得太快了。\n還來不及消化感受些什麼，轉頭又得先離開。\n一天當三天用確實感覺很精彩，\n但是不是錯過太多細節了呢？ 晚安',
-   'video_view_count': None},
-  {'post_id': '1235381784613582',
-   'post_url': 'https://www.facebook.com/1235381784613582',
-   'username_or_userid': '100044253168423',
-   'owing_profile': {'__typename': 'User',
-    'name': '邵雨薇',
-    'short_name': '邵雨薇',
-    'id': '100044253168423'},
-   'published_date': Timestamp('2025-04-25 05:49:56'),
-   'published_date2': '2025-04-25',
-   'time': 1745560196,
-   'reaction_count.count': 6846,
-   'comment_rendering_instance.comments.total_count': 101,
-   'share_count.count': 40,
-   'sub_reactions': {'讚': 6405, '大心': 408, '加油': 19, '哈': 14},
-   'context': '偶爾需要遇見一道彩虹，\n雨後剛轉天晴時，就像一個新希望。',
-   'video_view_count': None}
- ]
+```json
+{
+  "fb_username_or_userid": "100044253168423",
+  "profile": [
+    "聯絡電話：0975-386-266",
+    "Page",
+    " · 演員",
+    "hawa00328@gmail.com",
+    "Not yet rated (3 reviews)",
+    "\ufeff",
+    "1,451,355 followers"
+  ],
+  "profile_picture": "https://scontent.ftpe7-3.fna.fbcdn.net/v/t39.30808-1/432384560_970902114394885_7123123077107726953_n.jpg?stp=dst-jpg_tt6&cstp=mx1080x1080&ctp=s720x720&_nc_cat=104&_nc_map=urlgen_bucketless&ccb=1-7&_nc_sid=3ab345&_nc_ohc=C9GPTPyK0hwQ7kNvwHTFdFF&_nc_oc=AdrWDzntYtzvcmUOpRnpswB1JYapb0E4Wwx9ZCDJfrvnEwFIt9V0sIPLt7Xt7TNyMMs&_nc_zt=24&_nc_ht=scontent.ftpe7-3.fna&_nc_gid=CCybvl4ONI1JyrxIM5N9dw&_nc_ss=7f289&oh=00_AQSHf0MMg2v1TJCMz52vEHkdrTiVTwQhPTlaJxO9G3UWPw&oe=6AFAA4A3",
+  "data": [
+    {
+      "post_id": "1687825662702523",
+      "post_url": "https://www.facebook.com/1687825662702523",
+      "username_or_userid": "100044253168423",
+      "owing_profile": {
+        "__typename": "User",
+        "name": "邵雨薇",
+        "short_name": "邵雨薇",
+        "id": "100044253168423"
+      },
+      "published_date": "2026-11-03 13:05:37",
+      "published_date2": "2026-11-03",
+      "time": 1793711137,
+      "reaction_count.count": 2203,
+      "comment_rendering_instance.comments.total_count": 24,
+      "share_count.count": 12,
+      "sub_reactions": {
+        "讚": 2008,
+        "大心": 189,
+        "哈": 3,
+        "加油": 2,
+        "哇": 1
+      },
+      "context": "日常是…\n被duolingo 情勒 繼續練習語言、\n滑好笑reels滑太晚、\n把自己拔出沙發去洗澡、\n早上起床與棉被對抗。\n\n生活想要有趣、生活需要規律\n3C重度使用者要吃葉黃素，\n保護心血管又抗發炎要吃魚油。\n\n🌼金盞花葉黃素軟膠囊Plus\n🐟 日本原裝進口85%高OMEGA3魚油\n\n即日起至11/13（五） 11:00\n趁雙11優惠一次把康萃魚油葉黃素補齊吧\nbeezintw\nhttps://yaoyao.biz/sdgHq",
+      "video_view_count": null
+    },
+    {
+      "post_id": "1686457486172674",
+      "post_url": "https://www.facebook.com/1686457486172674",
+      "username_or_userid": "100044253168423",
+      "owing_profile": {
+        "__typename": "User",
+        "name": "邵雨薇",
+        "short_name": "邵雨薇",
+        "id": "100044253168423"
+      },
+      "published_date": "2026-11-02 04:06:42",
+      "published_date2": "2026-11-02",
+      "time": 1793592402,
+      "reaction_count.count": 776,
+      "comment_rendering_instance.comments.total_count": 12,
+      "share_count.count": 4,
+      "sub_reactions": {
+        "讚": 686,
+        "大心": 86,
+        "哇": 3,
+        "加油": 1
+      },
+      "context": "小編：粉潤對策是保養的基礎工程\n啟動好氣色\n這次日本味王在雙11準備了粉潤對策特別優惠，快塞滿你的購物車吧\n28 天明亮勻淨計劃，把光還給自己，讓陰影優雅消散。\nhttps://www.momoshop.com.tw/product/15653474\n\n#日本味王 #粉潤對策 #momo雙11",
+      "video_view_count": null
+    },
+    {
+      "post_id": "1681788199972936",
+      "post_url": "https://www.facebook.com/1681788199972936",
+      "username_or_userid": "100044253168423",
+      "owing_profile": {
+        "__typename": "User",
+        "name": "邵雨薇",
+        "short_name": "邵雨薇",
+        "id": "100044253168423"
+      },
+      "published_date": "2026-10-28 12:36:07",
+      "published_date2": "2026-10-28",
+      "time": 1793190967,
+      "reaction_count.count": 1784,
+      "comment_rendering_instance.comments.total_count": 14,
+      "share_count.count": 5,
+      "sub_reactions": {
+        "讚": 1649,
+        "大心": 124,
+        "加油": 4,
+        "哈": 4,
+        "哇": 2,
+        "怒": 1
+      },
+      "context": "今天的狀態，粉潤剛剛好！\n日本味王「粉潤對策」\n新廣告登場✨\n\n#日本味王 #粉潤對策",
+      "video_view_count": null
+    },
+    {
+      "post_id": "1680624306755992",
+      "post_url": "https://www.facebook.com/1680624306755992",
+      "username_or_userid": "100044253168423",
+      "owing_profile": {
+        "__typename": "User",
+        "name": "邵雨薇",
+        "short_name": "邵雨薇",
+        "id": "100044253168423"
+      },
+      "published_date": "2026-10-27 09:12:27",
+      "published_date2": "2026-10-27",
+      "time": 1793092347,
+      "reaction_count.count": 3647,
+      "comment_rendering_instance.comments.total_count": 43,
+      "share_count.count": 43,
+      "sub_reactions": {
+        "讚": 3346,
+        "大心": 285,
+        "加油": 9,
+        "哈": 3,
+        "哇": 3,
+        "嗚": 1
+      },
+      "context": "謝謝金鐘61🤍\n好值得收藏在記憶裡的一天\n\n👗louisvuitton #LouisVuitton\n💎bvlgari",
+      "video_view_count": null
+    },
+    {
+      "post_id": "1673892820762474",
+      "post_url": "https://www.facebook.com/1673892820762474",
+      "username_or_userid": "100044253168423",
+      "owing_profile": {
+        "__typename": "User",
+        "name": "邵雨薇",
+        "short_name": "邵雨薇",
+        "id": "100044253168423"
+      },
+      "published_date": "2026-10-20 11:00:42",
+      "published_date2": "2026-10-20",
+      "time": 1792494042,
+      "reaction_count.count": 1283,
+      "comment_rendering_instance.comments.total_count": 26,
+      "share_count.count": 13,
+      "sub_reactions": {
+        "讚": 1118,
+        "大心": 154,
+        "哈": 5,
+        "加油": 3,
+        "哇": 2,
+        "嗚": 1
+      },
+      "context": "第二年擔任MIXX平台的代言人\n滿心期待每個將送來的包裹\n\nMIXX雙十一將帶給大家更多質感選物\n快來跟我一起下單吧\n\n#MIXX #MIXX質感美學選物平台 #MIXX雙十一",
+      "video_view_count": null
+    },
+    {
+      "post_id": "1670182317800191",
+      "post_url": "https://www.facebook.com/1670182317800191",
+      "username_or_userid": "100044253168423",
+      "owing_profile": {
+        "__typename": "User",
+        "name": "邵雨薇",
+        "short_name": "邵雨薇",
+        "id": "100044253168423"
+      },
+      "published_date": "2026-10-16 12:52:53",
+      "published_date2": "2026-10-16",
+      "time": 1792155173,
+      "reaction_count.count": 8298,
+      "comment_rendering_instance.comments.total_count": 110,
+      "share_count.count": 236,
+      "sub_reactions": {
+        "讚": 7591,
+        "大心": 649,
+        "加油": 30,
+        "哇": 17,
+        "哈": 10,
+        "嗚": 1
+      },
+      "context": "穿搭沒有標準答案，喜歡就好。\n\n除了衣服本身，我在意的\n還有那些讓整體更好看的小細節。\n穿出自己喜歡的樣子，就是最好的風格。\n@曼黛瑪璉  #雙弧\n\nhttps://bmai.app/c13bd4b5\n\n#曼黛瑪璉 #迷人雙弧 #挺美",
+      "video_view_count": null
+    }
+  ]
 }
 ```
 

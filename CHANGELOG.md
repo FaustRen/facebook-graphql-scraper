@@ -6,6 +6,30 @@ This project adheres to [Semantic Versioning](https://semver.org/) and follows t
 
 ---
 
+## [1.2.1] - 2026-11-12
+
+### Fixed
+
+* Fixed anonymous Facebook timeline scraping failures where every replayed GraphQL request returned `missing_required_variable_value` and no posts were collected
+* Fixed `KeyError: 'post_id'` raised by `format_data()` when no posts were collected
+
+### Changed
+
+* Anonymous timeline requests now reuse the `variables` captured from the browser's own `ProfileCometTimelineFeedRefetchQuery` request, overriding only `beforeTime`, `cursor` and `id`, instead of relying on a hand-maintained variable list
+* Newly required or changed Relay variables are now picked up automatically without code changes
+* Stop scraping and print the GraphQL error message when a response contains `errors`, instead of retrying several empty rounds
+* Posts older than `days_limit` are now filtered out of the anonymous scraping result
+* Updated the usage example and README result example to match the current output
+* Removed the login-based example from the README, as login-based scraping is not currently planned
+
+### Notes
+
+* `get_payload()` and `get_next_payload()` are still available in `utils` but are no longer used by the anonymous scraping flow
+* Each pagination round currently returns the number of posts requested by the browser (typically 2), so collecting a long time range requires more requests
+* Facebook's GraphQL request structure is not a public stable API and may change again in future releases
+
+---
+
 ## [1.2.0] - 2026-08-18
 
 ### Added
