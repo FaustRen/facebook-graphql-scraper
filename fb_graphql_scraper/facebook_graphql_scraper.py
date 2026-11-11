@@ -11,7 +11,6 @@ from fb_graphql_scraper.utils.parser import RequestsParser
 from fb_graphql_scraper.utils.locator import *
 from fb_graphql_scraper.utils.utils import *
 
-
 class FacebookSettings:
     """ How to use:
     from fb_graphql_scraper.facebook_graphql_scraper import FacebookGraphqlScraper as fb_graphql_scraper
@@ -105,6 +104,7 @@ class FacebookGraphqlScraper(FacebookSettings):
                 for each_body in body_out:
                     json_data = json.loads(each_body)
                     try:
+                        
                         each_res = json_data['data']['node'].copy()
                         each_feedback = find_feedback_with_subscription_target_id(
                             each_res)
@@ -156,6 +156,8 @@ class FacebookGraphqlScraper(FacebookSettings):
         return plugin_soup.text
     
     def format_data(self, res_in, fb_username_or_userid, new_reactions):
+        if not res_in:
+            return []
         final_res = pd.json_normalize(res_in)
         row_count = len(final_res)
         final_res['context'] = (self.requests_parser.context_list + [None] * row_count)[:row_count]
@@ -244,6 +246,7 @@ class FacebookGraphqlScraper(FacebookSettings):
                     user_id = str(payload_variables["id"])
                     doc_id = str(init_payload.get("doc_id"))
                     self.init_cursor = init_payload.get('variables').get('cursor')
+                    self.init_variables = payload_variables
                     print("Collect posts wihout loggin in.")
                     break
                 print("Wait 1 second to load page")
@@ -330,6 +333,36 @@ class FacebookGraphqlScraper(FacebookSettings):
             "data": final_res,
         }
         
+    def _build_payload_from_browser(self, doc_id, user_id, before_time, cursor):
+        """Reuse the variables captured from the browser so newly required variables are never missed."""
+        variables = dict(self.init_variables)
+        variables["beforeTime"] = before_time
+        variables["cursor"] = cursor
+        variables["id"] = user_id
+        return {"variables": json.dumps(variables), "doc_id": doc_id}
+
+    @staticmethod
+    def _get_graphql_error(body_content):
+        """Return the first graphql error message in the response, or None."""
+        for each_body in body_content:
+            try:
+                errors = json.loads(each_body).get("errors")
+            except (ValueError, AttributeError):
+                continue
+            if errors:
+                return errors[0].get("message") or str(errors[0])
+        return None
+
+    @staticmethod
+    def _filter_posts_by_days(posts, days_limit):
+        """Drop posts older than days_limit, using the same UTC-date rule as compare_timestamp."""
+        past_date = datetime.utcnow().date() - timedelta(days=days_limit)
+        return [
+            each_post for each_post in posts
+            if each_post.get("time") is None
+            or datetime.utcfromtimestamp(int(each_post["time"])).date() >= past_date
+        ]
+
     def requests_flow(self, doc_id:str, fb_username_or_userid:str, days_limit:int, profile_feed:list, display_progress=True):
         """
         Fetch more posts from a user's Facebook profile using the requests module.
@@ -367,11 +400,12 @@ class FacebookGraphqlScraper(FacebookSettings):
         # Extract data
         for i in range(loop_limit):
             if is_first_time:
-                payload_in = get_payload(
-                    doc_id_in=doc_id, 
-                    id_in=fb_username_or_userid, 
+                print(f"is_first_time:")
+                payload_in = self._build_payload_from_browser(
+                    doc_id=doc_id,
+                    user_id=fb_username_or_userid,
                     before_time=before_time,
-                    cursor_in=str(self.init_cursor)
+                    cursor=self.init_cursor
                 )
                 is_first_time = False
                 
@@ -379,13 +413,13 @@ class FacebookGraphqlScraper(FacebookSettings):
             # if not the first tiime send request, use function 'get_next_payload' for extracting end cursor to scrape next round
             elif not is_first_time:
                 next_cursor = get_next_cursor(body_content_in=body_content)
-                payload_in = get_next_payload(
-                    doc_id_in=doc_id, 
-                    id_in=fb_username_or_userid, 
+                print(f"Next cursor for subsequent request: {next_cursor}")
+                payload_in = self._build_payload_from_browser(
+                    doc_id=doc_id,
+                    user_id=fb_username_or_userid,
                     before_time=before_time, # input before_time
-                    cursor_in=next_cursor
+                    cursor=next_cursor
                 )
-            
             response = requests.post(
                 url=url, 
                 data=payload_in,
@@ -393,6 +427,10 @@ class FacebookGraphqlScraper(FacebookSettings):
             body = response.content
             decoded_body = body.decode("utf-8")
             body_content = decoded_body.split("\n")
+            graphql_error = self._get_graphql_error(body_content)
+            if graphql_error:
+                print(f"Graphql request failed (HTTP {response.status_code}): {graphql_error}")
+                break
             pre_creation_len = len(self.requests_parser.creation_list)
             self.requests_parser.parse_body(body_content=body_content)
             latest_creation_time = None
@@ -404,7 +442,13 @@ class FacebookGraphqlScraper(FacebookSettings):
 
             # Check progress
             next_page_status = get_next_page_status(body_content=body_content)
-
+            try:
+                print(f"Latest creation time: {latest_creation_time}")
+                print(f"Next page status: {next_page_status}")
+            except Exception as e:
+                print(f"Error occurred while printing latest creation time: {e}")
+                print(f"Latest creation time: {latest_creation_time}")
+                print(f"Next page status: {next_page_status}")
             if latest_creation_time is not None:
                 before_time = str(latest_creation_time)
                 no_creation_rounds = 0
@@ -434,6 +478,7 @@ class FacebookGraphqlScraper(FacebookSettings):
             fb_username_or_userid=fb_username_or_userid, 
             new_reactions=new_reactions
         )
+        final_res = self._filter_posts_by_days(final_res, days_limit)
         return {
             "fb_username_or_userid": fb_username_or_userid,
             "profile": profile_feed,
